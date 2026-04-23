@@ -1,5 +1,37 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+
+// Firing cones the studio uses. Default is Cone 6.
+const cones = [
+  { id: '04', label: 'Cone 04' },
+  { id: '5',  label: 'Cone 5'  },
+  { id: '6',  label: 'Cone 6'  },
+];
+const defaultCone = '6';
+
+// Studio clay bodies with per-cone total shrinkage.
+// Values from each maker's published data sheet; verify against your own fires.
+type ClayBody = {
+  id: string;
+  group: string;
+  name: string;
+  shrinkage: Partial<Record<'04' | '5' | '6', number>>;
+  note?: string;
+};
+
+const clayBodies: ClayBody[] = [
+  { id: 'kristy-lombard',      group: 'Georgies', name: 'Kristy Lombard',            shrinkage: { '04': 6.23,  '6': 11.50 } },
+  { id: 'g-mix-6',             group: 'Georgies', name: 'G-Mix 6',                   shrinkage: { '04': 5.36,  '6': 10.92 } },
+  { id: 'pioneer-dark-spkd',   group: 'Georgies', name: 'Pioneer Dark w/ Speckles',  shrinkage: { '04': 7.33,  '6': 10.99 } },
+  { id: 'trail-mix-chocolate', group: 'Georgies', name: 'Trail Mix Dark Chocolate',  shrinkage: { '04': 10.17, '6': 13.05 } },
+  { id: 'trail-mix-cinnamon',  group: 'Georgies', name: 'Trail Mix Cinnamon',        shrinkage: { '04': 6.86,  '6': 11.86 } },
+  { id: 'azabache-black',      group: 'Laguna',   name: 'Azabache Black',            shrinkage: { '5': 13.00 }, note: 'Do not fire past Cone 5' },
+];
+
+const clayGroups: Record<string, ClayBody[]> = {};
+for (const body of clayBodies) {
+  (clayGroups[body.group] ??= []).push(body);
+}
 ---
 
 <Layout
@@ -31,6 +63,16 @@ import Layout from '../../layouts/Layout.astro';
 
     <div class="inputs">
       <div class="input-row">
+        <label class="input-label" for="cone">Cone</label>
+        <div class="input-wrap">
+          <select class="select-field" id="cone" autocomplete="off">
+            {cones.map((c) => (
+              <option value={c.id} selected={c.id === defaultCone}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div class="input-row">
         <label class="input-label" for="w">Width</label>
         <div class="input-wrap">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="w" placeholder="&mdash;" />
@@ -40,6 +82,33 @@ import Layout from '../../layouts/Layout.astro';
         <label class="input-label" for="h">Height</label>
         <div class="input-wrap">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="h" placeholder="&mdash;" />
+        </div>
+      </div>
+      <div class="input-row">
+        <label class="input-label" for="clay">Clay Body</label>
+        <div class="input-wrap">
+          <select class="select-field" id="clay" autocomplete="off">
+            <option value="">None &mdash; enter % manually</option>
+            {Object.entries(clayGroups).map(([group, bodies]) => (
+              <optgroup label={group}>
+                {bodies.map((b) => {
+                  const initial = b.shrinkage[defaultCone as '04' | '5' | '6'];
+                  return (
+                    <option
+                      value={b.id}
+                      data-name={b.name}
+                      data-s04={b.shrinkage['04']}
+                      data-s5={b.shrinkage['5']}
+                      data-s6={b.shrinkage['6']}
+                      disabled={initial === undefined}
+                    >
+                      {b.name}{initial !== undefined ? ' · ' + initial.toFixed(2) + '%' : ''}
+                    </option>
+                  );
+                })}
+              </optgroup>
+            ))}
+          </select>
         </div>
       </div>
       <div class="input-row">
@@ -77,6 +146,8 @@ import Layout from '../../layouts/Layout.astro';
       const wEl = document.getElementById('w');
       const hEl = document.getElementById('h');
       const sEl = document.getElementById('s');
+      const clayEl = document.getElementById('clay');
+      const coneEl = document.getElementById('cone');
       const resValue = document.getElementById('resValue');
       const resLabel = document.getElementById('resLabel');
       const resSub = document.getElementById('resSub');
@@ -85,6 +156,73 @@ import Layout from '../../layouts/Layout.astro';
       const historyList = document.getElementById('historyList');
       const clearBtn = document.getElementById('clearBtn');
       const modeBtns = document.querySelectorAll('.mode-btn');
+
+      function currentCone() {
+        return coneEl.value || '6';
+      }
+
+      function coneLabel(c) {
+        return 'Cone ' + c;
+      }
+
+      // Read the shrinkage rate for a given option at the current cone.
+      // Returns NaN if the body isn't rated for this cone.
+      function optionShrinkage(opt, cone) {
+        if (!opt) return NaN;
+        const raw = opt.dataset['s' + cone];
+        if (raw === undefined || raw === '') return NaN;
+        const n = parseFloat(raw);
+        return isNaN(n) ? NaN : n;
+      }
+
+      // Update clay body option labels + disabled state to reflect the current cone.
+      // If the currently selected body isn't rated for this cone, deselect it.
+      function refreshClayOptionsForCone() {
+        const cone = currentCone();
+        const opts = clayEl.querySelectorAll('option[value]');
+        opts.forEach(opt => {
+          if (!opt.value) return; // skip the "None" option
+          const name = opt.dataset.name || '';
+          const pct = optionShrinkage(opt, cone);
+          if (isNaN(pct)) {
+            opt.disabled = true;
+            opt.textContent = name + ' — not rated at ' + coneLabel(cone);
+          } else {
+            opt.disabled = false;
+            opt.textContent = name + ' · ' + pct.toFixed(2) + '%';
+          }
+        });
+
+        // If the currently selected body no longer has data, deselect it.
+        if (clayEl.value) {
+          const selectedOpt = clayEl.options[clayEl.selectedIndex];
+          if (selectedOpt && selectedOpt.disabled) {
+            clayEl.value = '';
+          }
+        }
+      }
+
+      function selectedClay() {
+        const opt = clayEl.options[clayEl.selectedIndex];
+        if (!opt || !clayEl.value) return null;
+        const cone = currentCone();
+        const shrink = optionShrinkage(opt, cone);
+        if (isNaN(shrink)) return null;
+        return {
+          id: clayEl.value,
+          name: opt.dataset.name || opt.text,
+          shrinkage: shrink,
+          cone: cone,
+        };
+      }
+
+      function effectiveShrinkage() {
+        const clay = selectedClay();
+        if (clay) return { value: clay.shrinkage, clay: clay };
+        const manual = parseNum(sEl.value);
+        if (manual === null) return { value: null, clay: null };
+        return { value: manual, clay: null };
+      }
 
       let mode = 'forward';
       let history = [];
@@ -119,7 +257,9 @@ import Layout from '../../layouts/Layout.astro';
       function calc() {
         const w = parseNum(wEl.value);
         const h = parseNum(hEl.value);
-        const s = parseNum(sEl.value);
+        const eff = effectiveShrinkage();
+        const s = eff.value;
+        const clay = eff.clay;
 
         if (s === null) {
           resValue.textContent = '—';
@@ -154,11 +294,14 @@ import Layout from '../../layouts/Layout.astro';
           : fmt(wr !== null ? wr : hr);
 
         resValue.textContent = display;
-        resSub.textContent = mode === 'forward'
+        const base = mode === 'forward'
           ? 'after ' + fmt(s) + '% shrinkage'
           : 'start oversized to land at input after ' + fmt(s) + '%';
+        resSub.textContent = clay
+          ? base + ' · ' + clay.name + ' (' + coneLabel(clay.cone) + ')'
+          : base;
 
-        return { w: w, h: h, s: s, wr: wr, hr: hr };
+        return { w: w, h: h, s: s, wr: wr, hr: hr, clay: clay, cone: currentCone() };
       }
 
       function setMode(m) {
@@ -182,7 +325,7 @@ import Layout from '../../layouts/Layout.astro';
         completeTimer = setTimeout(maybeAddHistory, 1500);
       }
 
-      [wEl, hEl, sEl].forEach(el => {
+      [wEl, hEl].forEach(el => {
         el.addEventListener('input', () => {
           calc();
           scheduleSave();
@@ -191,18 +334,64 @@ import Layout from '../../layouts/Layout.astro';
         el.addEventListener('blur', maybeAddHistory);
       });
 
+      // Shrinkage % field is mutually exclusive with the clay body selector.
+      // Typing here clears any selected clay body.
+      sEl.addEventListener('input', () => {
+        if (sEl.value.trim() !== '' && clayEl.value) {
+          clayEl.value = '';
+        }
+        calc();
+        scheduleSave();
+        scheduleComplete();
+      });
+      sEl.addEventListener('blur', maybeAddHistory);
+
+      // Choosing a clay body clears the manual shrinkage field.
+      clayEl.addEventListener('change', () => {
+        if (clayEl.value) sEl.value = '';
+        calc();
+        saveSettings();
+        scheduleComplete();
+      });
+
+      // Changing the cone relabels the clay list (and may disable the current pick).
+      coneEl.addEventListener('change', () => {
+        refreshClayOptionsForCone();
+        calc();
+        saveSettings();
+        scheduleComplete();
+      });
+
       function maybeAddHistory() {
         const r = calc();
         if (!r) return;
         if (r.w === null && r.h === null) return;
-        const key = mode + '|' + r.w + '|' + r.h + '|' + r.s;
+        const clayId = r.clay ? r.clay.id : '';
+        const cone = r.cone || currentCone();
+        const key = mode + '|' + cone + '|' + r.w + '|' + r.h + '|' + r.s + '|' + clayId;
         if (key === lastHistoryKey) return;
         lastHistoryKey = key;
 
-        const entry = Object.assign({ mode: mode, ts: Date.now() }, r);
+        const entry = {
+          mode: mode,
+          cone: cone,
+          w: r.w,
+          h: r.h,
+          s: r.s,
+          wr: r.wr,
+          hr: r.hr,
+          clayId: clayId,
+          clayName: r.clay ? r.clay.name : null,
+          ts: Date.now(),
+        };
 
         history = history.filter(x =>
-          !(x.mode === entry.mode && x.w === entry.w && x.h === entry.h && x.s === entry.s));
+          !(x.mode === entry.mode &&
+            (x.cone || '6') === entry.cone &&
+            x.w === entry.w &&
+            x.h === entry.h &&
+            x.s === entry.s &&
+            (x.clayId || '') === entry.clayId));
         history.unshift(entry);
         if (history.length > 12) history = history.slice(0, 12);
 
@@ -224,9 +413,11 @@ import Layout from '../../layouts/Layout.astro';
             : fmt(e.wr !== null ? e.wr : e.hr);
           const left = e.mode === 'forward' ? inp : out;
           const right = e.mode === 'forward' ? out : inp;
-          const metaText = e.mode === 'forward'
+          const clayLabel = e.clayName ? ' · ' + e.clayName : '';
+          const coneSuffix = e.cone ? ' · ' + coneLabel(e.cone) : '';
+          const metaText = (e.mode === 'forward'
             ? fmt(e.s) + '% shrink'
-            : fmt(e.s) + '% · reverse calc';
+            : fmt(e.s) + '% · reverse calc') + clayLabel + coneSuffix;
           return (
             '<div class="history-item" data-idx="' + i + '">' +
               '<div class="history-calc">' + left +
@@ -246,10 +437,25 @@ import Layout from '../../layouts/Layout.astro';
               mode = e.mode;
               updateModeUI();
             }
+            // Set cone first so clay option labels and disabled state are right.
+            if (e.cone && coneEl.value !== e.cone) {
+              coneEl.value = e.cone;
+            }
+            refreshClayOptionsForCone();
+
             wEl.value = e.w !== null ? e.w : '';
             hEl.value = e.h !== null ? e.h : '';
-            sEl.value = e.s;
-            lastHistoryKey = mode + '|' + e.w + '|' + e.h + '|' + e.s;
+            // Restore either the clay body or the manual %, never both.
+            if (e.clayId) {
+              clayEl.value = e.clayId;
+              sEl.value = '';
+            } else {
+              clayEl.value = '';
+              sEl.value = e.s;
+            }
+            const clayId = e.clayId || '';
+            const cone = e.cone || currentCone();
+            lastHistoryKey = mode + '|' + cone + '|' + e.w + '|' + e.h + '|' + e.s + '|' + clayId;
             calc();
             saveSettings();
           });
@@ -260,9 +466,11 @@ import Layout from '../../layouts/Layout.astro';
         try {
           localStorage.setItem(STORAGE_KEY + ':settings', JSON.stringify({
             mode: mode,
+            cone: coneEl.value,
             lastShrinkage: sEl.value,
             lastW: wEl.value,
             lastH: hEl.value,
+            lastClay: clayEl.value,
           }));
         } catch (e) { /* ignore */ }
       }
@@ -279,11 +487,34 @@ import Layout from '../../layouts/Layout.astro';
           if (raw) {
             const d = JSON.parse(raw);
             if (d.mode === 'forward' || d.mode === 'reverse') mode = d.mode;
-            if (d.lastShrinkage) sEl.value = d.lastShrinkage;
+            if (d.cone) {
+              // Only restore the saved cone if it still exists in the list.
+              const coneOpt = coneEl.querySelector('option[value="' + String(d.cone).replace(/"/g, '\\"') + '"]');
+              if (coneOpt) coneEl.value = d.cone;
+            }
+            // Apply cone-dependent option state before restoring the clay pick.
+            refreshClayOptionsForCone();
+
             if (d.lastW) wEl.value = d.lastW;
             if (d.lastH) hEl.value = d.lastH;
+            // Restore either the clay body (preferred) or the manual %.
+            if (d.lastClay) {
+              const opt = clayEl.querySelector('option[value="' + d.lastClay.replace(/"/g, '\\"') + '"]');
+              if (opt && !opt.disabled) {
+                clayEl.value = d.lastClay;
+                sEl.value = '';
+              } else if (d.lastShrinkage) {
+                sEl.value = d.lastShrinkage;
+              }
+            } else if (d.lastShrinkage) {
+              sEl.value = d.lastShrinkage;
+            }
+          } else {
+            refreshClayOptionsForCone();
           }
-        } catch (e) { /* no settings yet */ }
+        } catch (e) {
+          refreshClayOptionsForCone();
+        }
 
         try {
           const raw = localStorage.getItem(STORAGE_KEY + ':history');
@@ -471,6 +702,43 @@ import Layout from '../../layouts/Layout.astro';
 
     .input-field:focus {
       outline: none;
+    }
+
+    .select-field {
+      flex: 1;
+      padding: 1.1rem 1.5rem 1.1rem 0;
+      border: none;
+      background: transparent;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      font-weight: 400;
+      color: var(--color-cream);
+      text-align: right;
+      text-align-last: right;
+      width: 100%;
+      min-width: 0;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9a97a' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.25rem center;
+    }
+
+    .select-field:focus {
+      outline: none;
+    }
+
+    .select-field option,
+    .select-field optgroup {
+      background-color: var(--color-surface);
+      color: var(--color-cream);
+      font-family: 'Jost', sans-serif;
+    }
+
+    .select-field optgroup {
+      color: var(--color-tan);
+      font-style: italic;
     }
 
     .input-suffix {
