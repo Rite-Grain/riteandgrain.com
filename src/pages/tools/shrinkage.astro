@@ -1,0 +1,390 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout
+  title="Shrinkage Calculator — Rite & Grain"
+  description="Calculate shrinkage percentage, yield, and amount lost from starting and finishing weights."
+  path="/tools/shrinkage/"
+>
+  <nav class="site-nav">
+    <a href="/" class="brand">Rite <em>&amp;</em> Grain</a>
+    <a href="/tools/">&larr; Tools</a>
+  </nav>
+
+  <main class="tool-page">
+    <header class="tool-header">
+      <div class="rule"><span class="rule-ornament">&#10022;</span></div>
+      <h1>Shrinkage Calculator</h1>
+      <p class="lede">
+        Enter the starting and finishing weight.<br />
+        We'll compute the shrinkage, yield, and amount lost.
+      </p>
+    </header>
+
+    <form class="calc" id="shrinkageForm" autocomplete="off">
+      <div class="field">
+        <label for="startWeight">Starting Weight</label>
+        <div class="input-row">
+          <input
+            id="startWeight"
+            name="startWeight"
+            type="number"
+            step="any"
+            min="0"
+            inputmode="decimal"
+            placeholder="0.00"
+          />
+          <select id="unit" name="unit" aria-label="Unit">
+            <option value="lb">lb</option>
+            <option value="oz">oz</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="finalWeight">Finishing Weight</label>
+        <div class="input-row">
+          <input
+            id="finalWeight"
+            name="finalWeight"
+            type="number"
+            step="any"
+            min="0"
+            inputmode="decimal"
+            placeholder="0.00"
+          />
+          <span class="unit-echo" id="unitEcho">lb</span>
+        </div>
+      </div>
+
+      <button type="reset" class="reset">Reset</button>
+    </form>
+
+    <section class="results" id="results" aria-live="polite">
+      <div class="result-card">
+        <span class="result-label">Shrinkage</span>
+        <span class="result-value" id="shrinkagePct">&mdash;</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Yield</span>
+        <span class="result-value" id="yieldPct">&mdash;</span>
+      </div>
+      <div class="result-card">
+        <span class="result-label">Weight Lost</span>
+        <span class="result-value" id="weightLost">&mdash;</span>
+      </div>
+    </section>
+
+    <aside class="notes">
+      <h3>Notes</h3>
+      <ul>
+        <li>
+          <strong>Shrinkage %</strong> = (Starting &minus; Finishing) &divide; Starting &times; 100
+        </li>
+        <li>
+          <strong>Yield %</strong> = Finishing &divide; Starting &times; 100
+        </li>
+        <li>
+          Useful for cooking loss, curing, drying, and other processes where mass is lost.
+        </li>
+      </ul>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    &copy; 2025 Rite &amp; Grain &nbsp;&middot;&nbsp; All Rights Reserved
+  </footer>
+
+  <script is:inline>
+    (function () {
+      const form = document.getElementById('shrinkageForm');
+      const startEl = document.getElementById('startWeight');
+      const finalEl = document.getElementById('finalWeight');
+      const unitEl = document.getElementById('unit');
+      const unitEcho = document.getElementById('unitEcho');
+      const shrinkagePctEl = document.getElementById('shrinkagePct');
+      const yieldPctEl = document.getElementById('yieldPct');
+      const weightLostEl = document.getElementById('weightLost');
+
+      const DASH = '—';
+
+      function fmtPct(n) {
+        if (!isFinite(n)) return DASH;
+        return n.toFixed(2) + '%';
+      }
+
+      function fmtWeight(n, unit) {
+        if (!isFinite(n)) return DASH;
+        const rounded = Math.round(n * 1000) / 1000;
+        return rounded.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 3,
+        }) + ' ' + unit;
+      }
+
+      function setState(el, state) {
+        el.classList.remove('is-positive', 'is-negative', 'is-neutral');
+        if (state) el.classList.add(state);
+      }
+
+      function recalc() {
+        const start = parseFloat(startEl.value);
+        const fin = parseFloat(finalEl.value);
+        const unit = unitEl.value;
+        unitEcho.textContent = unit;
+
+        if (!isFinite(start) || start <= 0 || !isFinite(fin) || fin < 0) {
+          shrinkagePctEl.textContent = DASH;
+          yieldPctEl.textContent = DASH;
+          weightLostEl.textContent = DASH;
+          setState(shrinkagePctEl, null);
+          setState(yieldPctEl, null);
+          setState(weightLostEl, null);
+          return;
+        }
+
+        const lost = start - fin;
+        const shrinkage = (lost / start) * 100;
+        const yieldVal = (fin / start) * 100;
+
+        shrinkagePctEl.textContent = fmtPct(shrinkage);
+        yieldPctEl.textContent = fmtPct(yieldVal);
+        weightLostEl.textContent = fmtWeight(lost, unit);
+
+        setState(shrinkagePctEl, lost < 0 ? 'is-negative' : 'is-neutral');
+        setState(yieldPctEl, 'is-neutral');
+        setState(weightLostEl, lost < 0 ? 'is-negative' : 'is-neutral');
+      }
+
+      form.addEventListener('input', recalc);
+      form.addEventListener('reset', function () {
+        setTimeout(recalc, 0);
+      });
+    })();
+  </script>
+
+  <style>
+    .tool-page {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 4rem;
+    }
+
+    .tool-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .tool-header .rule {
+      margin-bottom: 1.75rem;
+    }
+
+    .tool-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-tan-light);
+      margin-bottom: 1rem;
+    }
+
+    .lede {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      color: var(--color-cream);
+      opacity: 0.75;
+      line-height: 1.6;
+    }
+
+    .calc {
+      background: linear-gradient(180deg, var(--color-surface) 0%, rgba(42, 31, 23, 0.5) 100%);
+      border: 1px solid var(--color-border);
+      border-radius: 2px;
+      padding: 2rem;
+      display: grid;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .field label {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    .calc input[type="number"],
+    .calc select {
+      background-color: rgba(28, 20, 16, 0.6);
+      border: 1px solid var(--color-border);
+      border-radius: 2px;
+      color: var(--color-cream);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      padding: 0.75rem 1rem;
+      transition: border-color 0.2s, background-color 0.2s;
+      width: 100%;
+    }
+
+    .calc select {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.9rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      width: auto;
+      min-width: 6rem;
+      cursor: pointer;
+      color: var(--color-tan-light);
+    }
+
+    .calc input[type="number"]:focus,
+    .calc select:focus {
+      outline: none;
+      border-color: var(--color-gold);
+      background-color: rgba(28, 20, 16, 0.85);
+    }
+
+    .calc input[type="number"]::placeholder {
+      color: var(--color-muted);
+      opacity: 0.6;
+    }
+
+    .unit-echo {
+      display: inline-flex;
+      align-items: center;
+      padding: 0 1rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      border: 1px solid transparent;
+      min-width: 6rem;
+      justify-content: center;
+    }
+
+    .reset {
+      justify-self: end;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-tan);
+      padding: 0.6rem 1.4rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .reset:hover {
+      color: var(--color-tan-light);
+      border-color: var(--color-gold);
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (max-width: 520px) {
+      .results {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .result-card {
+      background-color: rgba(42, 31, 23, 0.5);
+      border: 1px solid var(--color-border);
+      border-radius: 2px;
+      padding: 1.25rem 1rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .result-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+    }
+
+    .result-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.4rem, 4vw, 1.85rem);
+      color: var(--color-tan-light);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      transition: color 0.2s;
+    }
+
+    .result-value.is-negative {
+      color: #d4887a;
+    }
+
+    .notes {
+      border-top: 1px solid var(--color-border);
+      padding-top: 2rem;
+    }
+
+    .notes h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 1rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+      margin-bottom: 1rem;
+    }
+
+    .notes ul {
+      list-style: none;
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .notes li {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--color-cream);
+      opacity: 0.7;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .notes li::before {
+      content: '\2022';
+      position: absolute;
+      left: 0;
+      color: var(--color-gold);
+    }
+
+    .notes strong {
+      color: var(--color-tan-light);
+      font-weight: 500;
+    }
+  </style>
+</Layout>

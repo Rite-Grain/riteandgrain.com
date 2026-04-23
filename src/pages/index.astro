@@ -1,194 +1,13 @@
 ---
+import Layout from '../layouts/Layout.astro';
 const title = "Rite & Grain — Coming Soon";
 const description = "Something exceptional is taking shape. Rite & Grain — coming soon.";
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://riteandgrain.com" />
-    <title>{title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      *, *::before, *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      :root {
-        --color-bg:        #1c1410;
-        --color-surface:   #2a1f17;
-        --color-border:    #5c3d2a;
-        --color-tan:       #c9a97a;
-        --color-tan-light: #e0c9a6;
-        --color-cream:     #f5edd8;
-        --color-gold:      #b8902a;
-        --color-muted:     #7a6248;
-      }
-
-      html, body {
-        height: 100%;
-      }
-
-      body {
-        background-color: var(--color-bg);
-        color: var(--color-cream);
-        font-family: 'Jost', sans-serif;
-        font-weight: 300;
-        letter-spacing: 0.04em;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 100dvh;
-        padding: 2rem;
-        position: relative;
-        overflow: hidden;
-      }
-
-      /* Subtle grain texture overlay */
-      body::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-        opacity: 0.04;
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      /* Radial warm glow from center */
-      body::after {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background: radial-gradient(ellipse 70% 60% at 50% 50%, #3d2510 0%, transparent 70%);
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      main {
-        position: relative;
-        z-index: 1;
-        text-align: center;
-        max-width: 640px;
-        width: 100%;
-      }
-
-      .rule {
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-        margin-bottom: 2.5rem;
-      }
-
-      .rule::before,
-      .rule::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(to right, transparent, var(--color-border), transparent);
-      }
-
-      .rule-ornament {
-        color: var(--color-gold);
-        font-size: 1rem;
-        line-height: 1;
-        opacity: 0.8;
-      }
-
-      .wordmark {
-        font-family: 'Cormorant Garamond', serif;
-        font-weight: 300;
-        font-size: clamp(3rem, 10vw, 5.5rem);
-        letter-spacing: 0.12em;
-        line-height: 1;
-        color: var(--color-tan-light);
-        text-transform: uppercase;
-        margin-bottom: 0.4rem;
-      }
-
-      .wordmark em {
-        font-style: italic;
-        color: var(--color-tan);
-      }
-
-      .tagline {
-        font-family: 'Jost', sans-serif;
-        font-weight: 300;
-        font-size: clamp(0.65rem, 2vw, 0.75rem);
-        letter-spacing: 0.35em;
-        text-transform: uppercase;
-        color: var(--color-muted);
-        margin-bottom: 3rem;
-      }
-
-      .divider {
-        width: 1px;
-        height: 3rem;
-        background: linear-gradient(to bottom, var(--color-border), transparent);
-        margin: 0 auto 3rem;
-      }
-
-      .message {
-        font-family: 'Cormorant Garamond', serif;
-        font-style: italic;
-        font-weight: 300;
-        font-size: clamp(1.2rem, 4vw, 1.65rem);
-        line-height: 1.6;
-        color: var(--color-cream);
-        opacity: 0.85;
-        margin-bottom: 3rem;
-      }
-
-      .contact {
-        font-size: 0.7rem;
-        letter-spacing: 0.25em;
-        text-transform: uppercase;
-        color: var(--color-muted);
-      }
-
-      .contact a {
-        color: var(--color-tan);
-        text-decoration: none;
-        border-bottom: 1px solid transparent;
-        transition: border-color 0.2s, color 0.2s;
-      }
-
-      .contact a:hover {
-        color: var(--color-tan-light);
-        border-bottom-color: var(--color-gold);
-      }
-
-      .footer {
-        position: fixed;
-        bottom: 1.5rem;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 0.6rem;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: var(--color-border);
-        z-index: 1;
-      }
-    </style>
-  </head>
-  <body>
+<Layout title={title} description={description} path="/">
+  <div class="home-wrap">
     <main>
-      <div class="rule">
+      <div class="rule" style="margin-bottom: 2.5rem;">
         <span class="rule-ornament">&#10022;</span>
       </div>
 
@@ -206,13 +25,118 @@ const description = "Something exceptional is taking shape. Rite & Grain — com
         Inquiries &mdash; <a href="mailto:hello@riteandgrain.com">hello@riteandgrain.com</a>
       </p>
 
-      <div class="rule" style="margin-top: 2.5rem; margin-bottom: 0;">
+      <p class="tools-link">
+        <a href="/tools/">Explore our tools &rarr;</a>
+      </p>
+
+      <div class="rule" style="margin-top: 2.5rem;">
         <span class="rule-ornament">&#10022;</span>
       </div>
     </main>
+  </div>
 
-    <footer class="footer">
-      &copy; {new Date().getFullYear()} Rite &amp; Grain &nbsp;&middot;&nbsp; All Rights Reserved
-    </footer>
-  </body>
-</html>
+  <footer class="footer">
+    &copy; 2025 Rite &amp; Grain &nbsp;&middot;&nbsp; All Rights Reserved
+  </footer>
+
+  <style>
+    .home-wrap {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100dvh - 5rem);
+      padding: 2rem;
+    }
+
+    main {
+      text-align: center;
+      max-width: 640px;
+      width: 100%;
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(3rem, 10vw, 5.5rem);
+      letter-spacing: 0.12em;
+      line-height: 1;
+      color: var(--color-tan-light);
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .wordmark em {
+      font-style: italic;
+      color: var(--color-tan);
+    }
+
+    .tagline {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      font-size: clamp(0.65rem, 2vw, 0.75rem);
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 3rem;
+    }
+
+    .divider {
+      width: 1px;
+      height: 3rem;
+      background: linear-gradient(to bottom, var(--color-border), transparent);
+      margin: 0 auto 3rem;
+    }
+
+    .message {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(1.2rem, 4vw, 1.65rem);
+      line-height: 1.6;
+      color: var(--color-cream);
+      opacity: 0.85;
+      margin-bottom: 3rem;
+    }
+
+    .contact {
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 2rem;
+    }
+
+    .contact a {
+      color: var(--color-tan);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .contact a:hover {
+      color: var(--color-tan-light);
+      border-bottom-color: var(--color-gold);
+    }
+
+    .tools-link {
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+    }
+
+    .tools-link a {
+      color: var(--color-tan);
+      text-decoration: none;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 0.3rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .tools-link a:hover {
+      color: var(--color-tan-light);
+      border-bottom-color: var(--color-gold);
+    }
+  </style>
+</Layout>
