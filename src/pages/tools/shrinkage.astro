@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 
 <Layout
   title="Shrinkage Calculator — Rite & Grain"
-  description="Calculate shrinkage percentage, yield, and amount lost from starting and finishing weights."
+  description="Workshop shrinkage calculator — compute the final size from a starting size, or reverse the math to oversize a piece that will shrink to a target."
   path="/tools/shrinkage/"
 >
   <nav class="site-nav">
@@ -15,83 +15,57 @@ import Layout from '../../layouts/Layout.astro';
   <main class="tool-page">
     <header class="tool-header">
       <div class="rule"><span class="rule-ornament">&#10022;</span></div>
-      <h1>Shrinkage Calculator</h1>
-      <p class="lede">
-        Enter the starting and finishing weight.<br />
-        We'll compute the shrinkage, yield, and amount lost.
-      </p>
+      <h1>Shrinkage</h1>
+      <p class="sub">Workshop Calc</p>
     </header>
 
-    <form class="calc" id="shrinkageForm" autocomplete="off">
-      <div class="field">
-        <label for="startWeight">Starting Weight</label>
-        <div class="input-row">
-          <input
-            id="startWeight"
-            name="startWeight"
-            type="number"
-            step="any"
-            min="0"
-            inputmode="decimal"
-            placeholder="0.00"
-          />
-          <select id="unit" name="unit" aria-label="Unit">
-            <option value="lb">lb</option>
-            <option value="oz">oz</option>
-            <option value="kg">kg</option>
-            <option value="g">g</option>
-          </select>
+    <div class="mode-toggle" role="tablist">
+      <div class="mode-indicator" id="modeIndicator"></div>
+      <button class="mode-btn active" data-mode="forward" type="button">Starting &rarr; Final</button>
+      <button class="mode-btn" data-mode="reverse" type="button">Target &larr; Starting</button>
+    </div>
+
+    <p class="mode-hint" id="modeHint">
+      Enter a <em>starting size</em> to find what it shrinks to.
+    </p>
+
+    <div class="inputs">
+      <div class="input-row">
+        <label class="input-label" for="w">Width</label>
+        <div class="input-wrap">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="w" placeholder="&mdash;" />
         </div>
       </div>
-
-      <div class="field">
-        <label for="finalWeight">Finishing Weight</label>
-        <div class="input-row">
-          <input
-            id="finalWeight"
-            name="finalWeight"
-            type="number"
-            step="any"
-            min="0"
-            inputmode="decimal"
-            placeholder="0.00"
-          />
-          <span class="unit-echo" id="unitEcho">lb</span>
+      <div class="input-row">
+        <label class="input-label" for="h">Height</label>
+        <div class="input-wrap">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="h" placeholder="&mdash;" />
         </div>
       </div>
-
-      <button type="reset" class="reset">Reset</button>
-    </form>
-
-    <section class="results" id="results" aria-live="polite">
-      <div class="result-card">
-        <span class="result-label">Shrinkage</span>
-        <span class="result-value" id="shrinkagePct">&mdash;</span>
+      <div class="input-row">
+        <label class="input-label" for="s">Shrinkage</label>
+        <div class="input-wrap">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="s" placeholder="&mdash;" />
+          <span class="input-suffix">%</span>
+        </div>
       </div>
-      <div class="result-card">
-        <span class="result-label">Yield</span>
-        <span class="result-value" id="yieldPct">&mdash;</span>
-      </div>
-      <div class="result-card">
-        <span class="result-label">Weight Lost</span>
-        <span class="result-value" id="weightLost">&mdash;</span>
-      </div>
-    </section>
+    </div>
 
-    <aside class="notes">
-      <h3>Notes</h3>
-      <ul>
-        <li>
-          <strong>Shrinkage %</strong> = (Starting &minus; Finishing) &divide; Starting &times; 100
-        </li>
-        <li>
-          <strong>Yield %</strong> = Finishing &divide; Starting &times; 100
-        </li>
-        <li>
-          Useful for cooking loss, curing, drying, and other processes where mass is lost.
-        </li>
-      </ul>
-    </aside>
+    <div class="result">
+      <div class="result-label" id="resLabel">Final size</div>
+      <div class="result-value" id="resValue">&mdash;</div>
+      <div class="result-sub" id="resSub">&nbsp;</div>
+    </div>
+
+    <div class="history-header">
+      <h2 class="history-title">Recent</h2>
+      <button class="clear-btn" id="clearBtn" type="button">Clear</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="empty">No calculations yet</div>
+    </div>
+
+    <p class="footer-note">Height is optional &middot; tap a row to reuse</p>
   </main>
 
   <footer class="footer">
@@ -100,69 +74,238 @@ import Layout from '../../layouts/Layout.astro';
 
   <script is:inline>
     (function () {
-      const form = document.getElementById('shrinkageForm');
-      const startEl = document.getElementById('startWeight');
-      const finalEl = document.getElementById('finalWeight');
-      const unitEl = document.getElementById('unit');
-      const unitEcho = document.getElementById('unitEcho');
-      const shrinkagePctEl = document.getElementById('shrinkagePct');
-      const yieldPctEl = document.getElementById('yieldPct');
-      const weightLostEl = document.getElementById('weightLost');
+      const wEl = document.getElementById('w');
+      const hEl = document.getElementById('h');
+      const sEl = document.getElementById('s');
+      const resValue = document.getElementById('resValue');
+      const resLabel = document.getElementById('resLabel');
+      const resSub = document.getElementById('resSub');
+      const modeIndicator = document.getElementById('modeIndicator');
+      const modeHint = document.getElementById('modeHint');
+      const historyList = document.getElementById('historyList');
+      const clearBtn = document.getElementById('clearBtn');
+      const modeBtns = document.querySelectorAll('.mode-btn');
 
-      const DASH = '—';
+      let mode = 'forward';
+      let history = [];
+      let saveTimer = null;
+      let completeTimer = null;
+      let lastHistoryKey = null;
 
-      function fmtPct(n) {
-        if (!isFinite(n)) return DASH;
-        return n.toFixed(2) + '%';
+      const STORAGE_KEY = 'rag-shrinkage-v1';
+
+      function parseNum(s) {
+        if (s === null || s === undefined) return null;
+        s = String(s).trim();
+        if (!s) return null;
+        const n = parseFloat(s);
+        return isNaN(n) ? null : n;
       }
 
-      function fmtWeight(n, unit) {
-        if (!isFinite(n)) return DASH;
-        const rounded = Math.round(n * 1000) / 1000;
-        return rounded.toLocaleString(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 3,
-        }) + ' ' + unit;
+      function fmt(n) {
+        if (n === null || n === undefined || isNaN(n)) return '—';
+        return parseFloat(n.toFixed(4)).toString();
       }
 
-      function setState(el, state) {
-        el.classList.remove('is-positive', 'is-negative', 'is-neutral');
-        if (state) el.classList.add(state);
+      function updateModeUI() {
+        modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+        modeIndicator.classList.toggle('right', mode === 'reverse');
+        resLabel.textContent = mode === 'forward' ? 'Final size' : 'Starting size';
+        modeHint.innerHTML = mode === 'forward'
+          ? 'Enter a <em>starting size</em> to find what it shrinks to.'
+          : 'Enter a <em>target final size</em> to find how large to start.';
       }
 
-      function recalc() {
-        const start = parseFloat(startEl.value);
-        const fin = parseFloat(finalEl.value);
-        const unit = unitEl.value;
-        unitEcho.textContent = unit;
+      function calc() {
+        const w = parseNum(wEl.value);
+        const h = parseNum(hEl.value);
+        const s = parseNum(sEl.value);
 
-        if (!isFinite(start) || start <= 0 || !isFinite(fin) || fin < 0) {
-          shrinkagePctEl.textContent = DASH;
-          yieldPctEl.textContent = DASH;
-          weightLostEl.textContent = DASH;
-          setState(shrinkagePctEl, null);
-          setState(yieldPctEl, null);
-          setState(weightLostEl, null);
-          return;
+        if (s === null) {
+          resValue.textContent = '—';
+          resSub.innerHTML = '&nbsp;';
+          return null;
         }
 
-        const lost = start - fin;
-        const shrinkage = (lost / start) * 100;
-        const yieldVal = (fin / start) * 100;
+        const factor = 1 - s / 100;
+        if (factor <= 0) {
+          resValue.textContent = '—';
+          resSub.textContent = 'shrinkage must be under 100%';
+          return null;
+        }
 
-        shrinkagePctEl.textContent = fmtPct(shrinkage);
-        yieldPctEl.textContent = fmtPct(yieldVal);
-        weightLostEl.textContent = fmtWeight(lost, unit);
+        let wr = null, hr = null;
+        if (mode === 'forward') {
+          if (w !== null) wr = w * factor;
+          if (h !== null) hr = h * factor;
+        } else {
+          if (w !== null) wr = w / factor;
+          if (h !== null) hr = h / factor;
+        }
 
-        setState(shrinkagePctEl, lost < 0 ? 'is-negative' : 'is-neutral');
-        setState(yieldPctEl, 'is-neutral');
-        setState(weightLostEl, lost < 0 ? 'is-negative' : 'is-neutral');
+        if (wr === null && hr === null) {
+          resValue.textContent = '—';
+          resSub.innerHTML = '&nbsp;';
+          return null;
+        }
+
+        const display = (wr !== null && hr !== null)
+          ? fmt(wr) + ' × ' + fmt(hr)
+          : fmt(wr !== null ? wr : hr);
+
+        resValue.textContent = display;
+        resSub.textContent = mode === 'forward'
+          ? 'after ' + fmt(s) + '% shrinkage'
+          : 'start oversized to land at input after ' + fmt(s) + '%';
+
+        return { w: w, h: h, s: s, wr: wr, hr: hr };
       }
 
-      form.addEventListener('input', recalc);
-      form.addEventListener('reset', function () {
-        setTimeout(recalc, 0);
+      function setMode(m) {
+        if (mode === m) return;
+        mode = m;
+        updateModeUI();
+        calc();
+        saveSettings();
+        scheduleComplete();
+      }
+
+      modeBtns.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+      function scheduleSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveSettings, 400);
+      }
+
+      function scheduleComplete() {
+        clearTimeout(completeTimer);
+        completeTimer = setTimeout(maybeAddHistory, 1500);
+      }
+
+      [wEl, hEl, sEl].forEach(el => {
+        el.addEventListener('input', () => {
+          calc();
+          scheduleSave();
+          scheduleComplete();
+        });
+        el.addEventListener('blur', maybeAddHistory);
       });
+
+      function maybeAddHistory() {
+        const r = calc();
+        if (!r) return;
+        if (r.w === null && r.h === null) return;
+        const key = mode + '|' + r.w + '|' + r.h + '|' + r.s;
+        if (key === lastHistoryKey) return;
+        lastHistoryKey = key;
+
+        const entry = Object.assign({ mode: mode, ts: Date.now() }, r);
+
+        history = history.filter(x =>
+          !(x.mode === entry.mode && x.w === entry.w && x.h === entry.h && x.s === entry.s));
+        history.unshift(entry);
+        if (history.length > 12) history = history.slice(0, 12);
+
+        saveHistory();
+        renderHistory();
+      }
+
+      function renderHistory() {
+        if (history.length === 0) {
+          historyList.innerHTML = '<div class="empty">No calculations yet</div>';
+          return;
+        }
+        historyList.innerHTML = history.map((e, i) => {
+          const inp = (e.w !== null && e.h !== null)
+            ? fmt(e.w) + ' × ' + fmt(e.h)
+            : fmt(e.w !== null ? e.w : e.h);
+          const out = (e.wr !== null && e.hr !== null)
+            ? fmt(e.wr) + ' × ' + fmt(e.hr)
+            : fmt(e.wr !== null ? e.wr : e.hr);
+          const left = e.mode === 'forward' ? inp : out;
+          const right = e.mode === 'forward' ? out : inp;
+          const metaText = e.mode === 'forward'
+            ? fmt(e.s) + '% shrink'
+            : fmt(e.s) + '% · reverse calc';
+          return (
+            '<div class="history-item" data-idx="' + i + '">' +
+              '<div class="history-calc">' + left +
+                '<span class="history-arrow">&rarr;</span>' +
+                right +
+              '</div>' +
+              '<div class="history-meta">' + metaText + '</div>' +
+            '</div>'
+          );
+        }).join('');
+
+        historyList.querySelectorAll('.history-item').forEach(el => {
+          el.addEventListener('click', () => {
+            const e = history[parseInt(el.dataset.idx, 10)];
+            if (!e) return;
+            if (mode !== e.mode) {
+              mode = e.mode;
+              updateModeUI();
+            }
+            wEl.value = e.w !== null ? e.w : '';
+            hEl.value = e.h !== null ? e.h : '';
+            sEl.value = e.s;
+            lastHistoryKey = mode + '|' + e.w + '|' + e.h + '|' + e.s;
+            calc();
+            saveSettings();
+          });
+        });
+      }
+
+      function saveSettings() {
+        try {
+          localStorage.setItem(STORAGE_KEY + ':settings', JSON.stringify({
+            mode: mode,
+            lastShrinkage: sEl.value,
+            lastW: wEl.value,
+            lastH: hEl.value,
+          }));
+        } catch (e) { /* ignore */ }
+      }
+
+      function saveHistory() {
+        try {
+          localStorage.setItem(STORAGE_KEY + ':history', JSON.stringify(history));
+        } catch (e) { /* ignore */ }
+      }
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY + ':settings');
+          if (raw) {
+            const d = JSON.parse(raw);
+            if (d.mode === 'forward' || d.mode === 'reverse') mode = d.mode;
+            if (d.lastShrinkage) sEl.value = d.lastShrinkage;
+            if (d.lastW) wEl.value = d.lastW;
+            if (d.lastH) hEl.value = d.lastH;
+          }
+        } catch (e) { /* no settings yet */ }
+
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY + ':history');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) history = parsed;
+          }
+        } catch (e) { /* no history yet */ }
+
+        updateModeUI();
+        calc();
+        renderHistory();
+      }
+
+      clearBtn.addEventListener('click', () => {
+        history = [];
+        lastHistoryKey = null;
+        try { localStorage.removeItem(STORAGE_KEY + ':history'); } catch (e) { /* ignore */ }
+        renderHistory();
+      });
+
+      load();
     })();
   </script>
 
@@ -170,221 +313,323 @@ import Layout from '../../layouts/Layout.astro';
     .tool-page {
       position: relative;
       z-index: 1;
-      max-width: 680px;
+      max-width: 540px;
       margin: 0 auto;
-      padding: 1.5rem 2rem 4rem;
+      padding: 1.5rem 1.25rem 3rem;
     }
 
     .tool-header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
     }
 
     .tool-header .rule {
-      margin-bottom: 1.75rem;
+      margin-bottom: 1.5rem;
     }
 
     .tool-header h1 {
       font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(2.2rem, 6vw, 3.5rem);
-      letter-spacing: 0.12em;
+      font-weight: 400;
+      font-size: clamp(2.2rem, 6vw, 3rem);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--color-tan-light);
-      margin-bottom: 1rem;
+      line-height: 1;
     }
 
-    .lede {
-      font-family: 'Cormorant Garamond', serif;
-      font-style: italic;
-      font-size: clamp(1rem, 2.2vw, 1.15rem);
-      color: var(--color-cream);
-      opacity: 0.75;
-      line-height: 1.6;
-    }
-
-    .calc {
-      background: linear-gradient(180deg, var(--color-surface) 0%, rgba(42, 31, 23, 0.5) 100%);
-      border: 1px solid var(--color-border);
-      border-radius: 2px;
-      padding: 2rem;
-      display: grid;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-
-    .field label {
-      font-size: 0.7rem;
+    .tool-header .sub {
+      margin-top: 0.5rem;
+      font-size: 0.65rem;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: var(--color-tan);
+      color: var(--color-muted);
+    }
+
+    /* --- Mode toggle --- */
+    .mode-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 0.9rem;
+      position: relative;
+    }
+
+    .mode-btn {
+      background: none;
+      border: none;
+      padding: 0.8rem 0.5rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      cursor: pointer;
+      border-radius: 10px;
+      transition: color 0.2s;
+      position: relative;
+      z-index: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mode-btn.active {
+      color: var(--color-cream);
+    }
+
+    .mode-indicator {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc(50% - 4px);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .mode-indicator.right {
+      transform: translateX(100%);
+    }
+
+    .mode-hint {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+      padding: 0 0.25rem;
+    }
+
+    .mode-hint em {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--color-tan-light);
+    }
+
+    /* --- Inputs card --- */
+    .inputs {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
     }
 
     .input-row {
       display: flex;
-      align-items: stretch;
-      gap: 0.75rem;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border);
     }
 
-    .calc input[type="number"],
-    .calc select {
-      background-color: rgba(28, 20, 16, 0.6);
-      border: 1px solid var(--color-border);
-      border-radius: 2px;
-      color: var(--color-cream);
+    .input-row:last-child {
+      border-bottom: none;
+    }
+
+    .input-label {
+      width: 110px;
+      padding: 1.1rem 1.25rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+    }
+
+    .input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      padding-right: 1.25rem;
+      min-width: 0;
+    }
+
+    .input-field {
+      flex: 1;
+      padding: 1.1rem 0;
+      border: none;
+      background: none;
       font-family: 'Cormorant Garamond', serif;
       font-size: 1.6rem;
-      padding: 0.75rem 1rem;
-      transition: border-color 0.2s, background-color 0.2s;
+      font-weight: 400;
+      color: var(--color-cream);
+      text-align: right;
       width: 100%;
+      min-width: 0;
     }
 
-    .calc select {
-      font-family: 'Jost', sans-serif;
-      font-size: 0.9rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      width: auto;
-      min-width: 6rem;
-      cursor: pointer;
-      color: var(--color-tan-light);
-    }
-
-    .calc input[type="number"]:focus,
-    .calc select:focus {
-      outline: none;
-      border-color: var(--color-gold);
-      background-color: rgba(28, 20, 16, 0.85);
-    }
-
-    .calc input[type="number"]::placeholder {
+    .input-field::placeholder {
       color: var(--color-muted);
       opacity: 0.6;
+      font-style: italic;
     }
 
-    .unit-echo {
-      display: inline-flex;
-      align-items: center;
-      padding: 0 1rem;
-      font-size: 0.85rem;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
+    .input-field:focus {
+      outline: none;
+    }
+
+    .input-suffix {
+      padding-left: 0.4rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.2rem;
       color: var(--color-muted);
-      border: 1px solid transparent;
-      min-width: 6rem;
-      justify-content: center;
     }
 
-    .reset {
-      justify-self: end;
-      background: transparent;
+    /* --- Result card --- */
+    .result {
+      background: linear-gradient(160deg, #120c08 0%, #1f150e 100%);
       border: 1px solid var(--color-border);
-      color: var(--color-tan);
-      padding: 0.6rem 1.4rem;
-      font-family: 'Jost', sans-serif;
-      font-size: 0.7rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: border-color 0.2s, color 0.2s;
-    }
-
-    .reset:hover {
-      color: var(--color-tan-light);
-      border-color: var(--color-gold);
-    }
-
-    .results {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 3rem;
-    }
-
-    @media (max-width: 520px) {
-      .results {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .result-card {
-      background-color: rgba(42, 31, 23, 0.5);
-      border: 1px solid var(--color-border);
-      border-radius: 2px;
-      padding: 1.25rem 1rem;
+      color: var(--color-cream);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      margin-bottom: 2rem;
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(184, 144, 42, 0.18), transparent 50%),
+        radial-gradient(circle at 85% 90%, rgba(176, 74, 46, 0.10), transparent 55%);
+      pointer-events: none;
     }
 
     .result-label {
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       letter-spacing: 0.3em;
       text-transform: uppercase;
       color: var(--color-muted);
+      margin-bottom: 0.75rem;
     }
 
     .result-value {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.4rem, 4vw, 1.85rem);
+      font-size: clamp(2.25rem, 7vw, 2.9rem);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      line-height: 1.05;
       color: var(--color-tan-light);
-      font-weight: 400;
-      letter-spacing: 0.02em;
-      transition: color 0.2s;
-    }
-
-    .result-value.is-negative {
-      color: #d4887a;
-    }
-
-    .notes {
-      border-top: 1px solid var(--color-border);
-      padding-top: 2rem;
-    }
-
-    .notes h3 {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 400;
-      font-size: 1rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--color-tan);
-      margin-bottom: 1rem;
-    }
-
-    .notes ul {
-      list-style: none;
-      display: grid;
-      gap: 0.8rem;
-    }
-
-    .notes li {
-      font-size: 0.85rem;
-      line-height: 1.6;
-      color: var(--color-cream);
-      opacity: 0.7;
-      padding-left: 1.2rem;
+      word-break: break-word;
       position: relative;
     }
 
-    .notes li::before {
-      content: '\2022';
-      position: absolute;
-      left: 0;
+    .result-sub {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--color-muted);
+      margin-top: 0.75rem;
+      min-height: 1em;
+      position: relative;
+    }
+
+    /* --- History --- */
+    .history-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      padding: 0 0.25rem;
+    }
+
+    .history-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 1.25rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-tan-light);
+    }
+
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--color-muted);
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      cursor: pointer;
+      padding: 0.4rem 0.5rem;
+      transition: color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .clear-btn:hover,
+    .clear-btn:active {
       color: var(--color-gold);
     }
 
-    .notes strong {
-      color: var(--color-tan-light);
-      font-weight: 500;
+    .history-list {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .history-item {
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid var(--color-border);
+      cursor: pointer;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-item:hover,
+    .history-item:active {
+      background: var(--color-surface-2);
+    }
+
+    .history-calc {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      color: var(--color-cream);
+    }
+
+    .history-arrow {
+      color: var(--color-gold);
+      font-style: italic;
+      margin: 0 0.4rem;
+    }
+
+    .history-meta {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-top: 0.25rem;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--color-muted);
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      padding: 1.5rem;
+    }
+
+    .footer-note {
+      margin-top: 1.25rem;
+      text-align: center;
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--color-muted);
     }
   </style>
 </Layout>
