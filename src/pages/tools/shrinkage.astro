@@ -20,12 +20,44 @@ type ClayBody = {
 };
 
 const clayBodies: ClayBody[] = [
-  { id: 'kristy-lombard',      group: 'Georgies', name: 'Kristy Lombard',            shrinkage: { '04': 6.23,  '6': 11.50 } },
-  { id: 'g-mix-6',             group: 'Georgies', name: 'G-Mix 6',                   shrinkage: { '04': 5.36,  '6': 10.92 } },
-  { id: 'pioneer-dark-spkd',   group: 'Georgies', name: 'Pioneer Dark w/ Speckles',  shrinkage: { '04': 7.33,  '6': 10.99 } },
-  { id: 'trail-mix-chocolate', group: 'Georgies', name: 'Trail Mix Dark Chocolate',  shrinkage: { '04': 10.17, '6': 13.05 } },
-  { id: 'trail-mix-cinnamon',  group: 'Georgies', name: 'Trail Mix Cinnamon',        shrinkage: { '04': 6.86,  '6': 11.86 } },
-  { id: 'azabache-black',      group: 'Laguna',   name: 'Azabache Black',            shrinkage: { '5': 13.00 }, note: 'Do not fire past Cone 5' },
+  // --- Georgies (Cone 4–7 Mid-Range) ---
+  { id: 'g-mix-6',                group: 'Georgies', name: 'G-Mix 6',                    shrinkage: { '04': 5.36,  '6': 10.92 } },
+  { id: 'g-mix-6-grog',           group: 'Georgies', name: 'G-Mix 6 with Grog',          shrinkage: { '04': 6.37,  '6': 11.12 } },
+  { id: 'kristy-lombard',         group: 'Georgies', name: 'Kristy Lombard',             shrinkage: { '04': 6.23,  '6': 11.50 } },
+  { id: 'mazama-red',             group: 'Georgies', name: 'Mazama Red',                 shrinkage: { '04': 8.31,  '6': 13.50 } },
+  { id: 'pat-horsley',            group: 'Georgies', name: 'Pat Horsley',                shrinkage: { '04': 6.13,  '6': 11.23 } },
+  { id: 'pioneer-dark',           group: 'Georgies', name: 'Pioneer Dark',               shrinkage: { '04': 7.51,  '6': 11.23 } },
+  { id: 'pioneer-dark-spkd',      group: 'Georgies', name: 'Pioneer Dark w/ Speckles',   shrinkage: { '04': 7.33,  '6': 10.99 } },
+  { id: 'rogue-river-buff',       group: 'Georgies', name: 'Rogue River Buff',           shrinkage: { '04': 6.30,  '6': 11.94 } },
+  { id: 'silver-falls-porcelain', group: 'Georgies', name: 'Silver Falls Porcelain',     shrinkage: { '04': 4.69,  '6': 12.03 } },
+  { id: 'timberline',             group: 'Georgies', name: 'Timberline',                 shrinkage: { '04': 6.65,  '6': 11.50 } },
+  { id: 'timberline-sculptural',  group: 'Georgies', name: 'Timberline Sculptural',      shrinkage: { '04': 6.01,  '6': 8.36  } },
+  { id: 'trail-mix',              group: 'Georgies', name: 'Trail Mix',                  shrinkage: { '04': 6.95,  '6': 11.59 } },
+  { id: 'trail-mix-cinnamon',     group: 'Georgies', name: 'Trail Mix Cinnamon',         shrinkage: { '04': 6.86,  '6': 11.86 } },
+  { id: 'trail-mix-chocolate',    group: 'Georgies', name: 'Trail Mix Dark Chocolate',   shrinkage: { '04': 10.17, '6': 13.05 } },
+  { id: 'trail-mix-toast',        group: 'Georgies', name: 'Trail Mix Toast',            shrinkage: { '04': 6.86,  '6': 11.07 } },
+  { id: 'trillium-porcelain',     group: 'Georgies', name: 'Trillium Porcelain',         shrinkage: { '04': 6.29,  '6': 11.65 } },
+  { id: 'white-salmon',           group: 'Georgies', name: 'White Salmon',               shrinkage: {              '6': 11.32 } },
+  { id: 'white-salmon-grog',      group: 'Georgies', name: 'White Salmon with Grog',     shrinkage: { '04': 8.13,  '6': 9.97  } },
+  { id: 'white-salmon-spkd',      group: 'Georgies', name: 'White Salmon w/ Speckles',   shrinkage: { '04': 6.95,  '6': 11.32 } },
+
+  // --- Laguna (Cone 5–6 Mid-Fire) ---
+  { id: 'laguna-50',              group: 'Laguna',   name: '50 (WC606)',                 shrinkage: { '6': 12.00 } },
+  { id: 'laguna-60',              group: 'Laguna',   name: '60 (WC608)',                 shrinkage: { '6': 10.90 } },
+  { id: 'laguna-75',              group: 'Laguna',   name: '75 (WC612)',                 shrinkage: { '6': 12.50 } },
+  { id: 'azabache-black',         group: 'Laguna',   name: 'Azabache Black',             shrinkage: { '5': 13.00 }, note: 'Do not fire past Cone 5' },
+  { id: 'bmix-5',                 group: 'Laguna',   name: 'B-Mix 5',                    shrinkage: { '5': 12.00 } },
+  { id: 'bmix-5-grog',            group: 'Laguna',   name: 'B-Mix 5 with Grog',          shrinkage: { '5': 11.00 } },
+  { id: 'bmix-5-speckles',        group: 'Laguna',   name: 'B-Mix 5 w/ Speckles',        shrinkage: { '5': 12.47 } },
+  { id: 'calico',                 group: 'Laguna',   name: 'Calico',                     shrinkage: { '5': 13.00 } },
+  { id: 'dark-horse',             group: 'Laguna',   name: 'Dark Horse',                 shrinkage: { '5': 9.00  }, note: 'Do not fire past Cone 5' },
+  { id: 'frost-porcelain',        group: 'Laguna',   name: 'Frost Porcelain',            shrinkage: { '5': 11.00, '6': 11.00 } },
+  { id: 'greystone-off-white',    group: 'Laguna',   name: 'Greystone Off-White',        shrinkage: { '5': 12.50, '6': 12.50 } },
+  { id: 'half-half',              group: 'Laguna',   name: 'Half & Half',                shrinkage: { '5': 12.00 } },
+  { id: 'red-bmix-grog',          group: 'Laguna',   name: 'Red B-Mix with Grog',        shrinkage: { '5': 9.00  } },
+  { id: 'redstone',               group: 'Laguna',   name: 'Redstone',                   shrinkage: { '5': 10.50, '6': 10.50 } },
+  { id: 'rsmc-special',           group: 'Laguna',   name: 'RSMC Special',               shrinkage: { '5': 12.00, '6': 12.00 } },
+  { id: 'ws-5',                   group: 'Laguna',   name: 'WS-5',                       shrinkage: { '5': 10.00 } },
 ];
 
 const clayGroups: Record<string, ClayBody[]> = {};
@@ -97,6 +129,7 @@ for (const body of clayBodies) {
                     <option
                       value={b.id}
                       data-name={b.name}
+                      data-note={b.note}
                       data-s04={b.shrinkage['04']}
                       data-s5={b.shrinkage['5']}
                       data-s6={b.shrinkage['6']}
@@ -119,6 +152,11 @@ for (const body of clayBodies) {
         </div>
       </div>
     </div>
+
+    <p class="clay-warning" id="clayWarning" role="alert" hidden>
+      <span class="warn-icon" aria-hidden="true">&#9888;</span>
+      <span id="clayWarningText"></span>
+    </p>
 
     <div class="result">
       <div class="result-label" id="resLabel">Final size</div>
@@ -155,6 +193,8 @@ for (const body of clayBodies) {
       const modeHint = document.getElementById('modeHint');
       const historyList = document.getElementById('historyList');
       const clearBtn = document.getElementById('clearBtn');
+      const warnEl = document.getElementById('clayWarning');
+      const warnTextEl = document.getElementById('clayWarningText');
       const modeBtns = document.querySelectorAll('.mode-btn');
 
       function currentCone() {
@@ -213,7 +253,18 @@ for (const body of clayBodies) {
           name: opt.dataset.name || opt.text,
           shrinkage: shrink,
           cone: cone,
+          note: opt.dataset.note || null,
         };
+      }
+
+      function updateClayWarning() {
+        const clay = selectedClay();
+        if (clay && clay.note) {
+          warnTextEl.textContent = clay.name + ' — ' + clay.note + '.';
+          warnEl.hidden = false;
+        } else {
+          warnEl.hidden = true;
+        }
       }
 
       function effectiveShrinkage() {
@@ -255,6 +306,7 @@ for (const body of clayBodies) {
       }
 
       function calc() {
+        updateClayWarning();
         const w = parseNum(wEl.value);
         const h = parseNum(hEl.value);
         const eff = effectiveShrinkage();
@@ -747,6 +799,35 @@ for (const body of clayBodies) {
       font-style: italic;
       font-size: 1.2rem;
       color: var(--color-muted);
+    }
+
+    /* --- Clay warning banner --- */
+    .clay-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      padding: 0.85rem 1.1rem;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(180deg, rgba(184, 144, 42, 0.14), rgba(176, 74, 46, 0.08));
+      border: 1px solid rgba(184, 144, 42, 0.45);
+      border-radius: 12px;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      line-height: 1.45;
+      color: #e6c98a;
+    }
+
+    .clay-warning[hidden] {
+      display: none;
+    }
+
+    .clay-warning .warn-icon {
+      font-family: 'Jost', sans-serif;
+      color: #d4a952;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      flex-shrink: 0;
     }
 
     /* --- Result card --- */

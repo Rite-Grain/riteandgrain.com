@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:www.georgies.com)"
+      "WebFetch(domain:www.georgies.com)",
+      "WebFetch(domain:www.lagunaclay.com)"
     ]
   }
 }
