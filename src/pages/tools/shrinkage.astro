@@ -635,6 +635,16 @@ for (const body of clayBodies) {
         if (key === lastHistoryKey) return;
         lastHistoryKey = key;
 
+        // If an identical calc already exists anywhere in history, leave it be.
+        const isDupe = history.some(x =>
+          x.mode === mode &&
+          (x.cone || '6') === cone &&
+          x.w === r.w &&
+          x.h === r.h &&
+          x.s === r.s &&
+          (x.clayId || '') === clayId);
+        if (isDupe) return;
+
         const entry = {
           mode: mode,
           cone: cone,
@@ -648,13 +658,6 @@ for (const body of clayBodies) {
           ts: Date.now(),
         };
 
-        history = history.filter(x =>
-          !(x.mode === entry.mode &&
-            (x.cone || '6') === entry.cone &&
-            x.w === entry.w &&
-            x.h === entry.h &&
-            x.s === entry.s &&
-            (x.clayId || '') === entry.clayId));
         history.unshift(entry);
         if (history.length > 12) history = history.slice(0, 12);
 
