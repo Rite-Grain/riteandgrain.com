@@ -118,30 +118,21 @@ for (const body of clayBodies) {
       </div>
       <div class="input-row">
         <label class="input-label" for="clay">Clay Body</label>
-        <div class="input-wrap">
-          <select class="select-field" id="clay" autocomplete="off">
-            <option value="">None &mdash; enter % manually</option>
-            {Object.entries(clayGroups).map(([group, bodies]) => (
-              <optgroup label={group}>
-                {bodies.map((b) => {
-                  const initial = b.shrinkage[defaultCone as '04' | '5' | '6'];
-                  return (
-                    <option
-                      value={b.id}
-                      data-name={b.name}
-                      data-note={b.note}
-                      data-s04={b.shrinkage['04']}
-                      data-s5={b.shrinkage['5']}
-                      data-s6={b.shrinkage['6']}
-                      disabled={initial === undefined}
-                    >
-                      {b.name}{initial !== undefined ? ' · ' + initial.toFixed(2) + '%' : ''}
-                    </option>
-                  );
-                })}
-              </optgroup>
-            ))}
-          </select>
+        <div class="input-wrap combobox" id="clayCombobox">
+          <input
+            class="input-field combobox-input"
+            id="clay"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="clayPanel"
+            placeholder="Search clay bodies…"
+          />
+          <span class="combobox-chevron" aria-hidden="true">&#9662;</span>
+          <div class="combobox-panel" id="clayPanel" role="listbox" hidden></div>
         </div>
       </div>
       <div class="input-row">
@@ -179,12 +170,14 @@ for (const body of clayBodies) {
     &copy; 2025 Rite &amp; Grain &nbsp;&middot;&nbsp; All Rights Reserved
   </footer>
 
-  <script is:inline>
+  <script is:inline define:vars={{ CLAY_BODIES: clayBodies }}>
     (function () {
       const wEl = document.getElementById('w');
       const hEl = document.getElementById('h');
       const sEl = document.getElementById('s');
       const clayEl = document.getElementById('clay');
+      const clayComboboxEl = document.getElementById('clayCombobox');
+      const clayPanelEl = document.getElementById('clayPanel');
       const coneEl = document.getElementById('cone');
       const resValue = document.getElementById('resValue');
       const resLabel = document.getElementById('resLabel');
@@ -197,6 +190,12 @@ for (const body of clayBodies) {
       const warnTextEl = document.getElementById('clayWarningText');
       const modeBtns = document.querySelectorAll('.mode-btn');
 
+      // --- Combobox state ---
+      let selectedClayId = '';
+      let comboOpen = false;
+      let comboHighlight = -1;
+      let comboItems = []; // last-rendered filtered items (in display order)
+
       function currentCone() {
         return coneEl.value || '6';
       }
@@ -205,56 +204,187 @@ for (const body of clayBodies) {
         return 'Cone ' + c;
       }
 
-      // Read the shrinkage rate for a given option at the current cone.
-      // Returns NaN if the body isn't rated for this cone.
-      function optionShrinkage(opt, cone) {
-        if (!opt) return NaN;
-        const raw = opt.dataset['s' + cone];
-        if (raw === undefined || raw === '') return NaN;
-        const n = parseFloat(raw);
-        return isNaN(n) ? NaN : n;
+      function bodyShrinkageAtCone(body, cone) {
+        if (!body || !body.shrinkage) return undefined;
+        return body.shrinkage[cone];
       }
 
-      // Update clay body option labels + disabled state to reflect the current cone.
-      // If the currently selected body isn't rated for this cone, deselect it.
-      function refreshClayOptionsForCone() {
-        const cone = currentCone();
-        const opts = clayEl.querySelectorAll('option[value]');
-        opts.forEach(opt => {
-          if (!opt.value) return; // skip the "None" option
-          const name = opt.dataset.name || '';
-          const pct = optionShrinkage(opt, cone);
-          if (isNaN(pct)) {
-            opt.disabled = true;
-            opt.textContent = name + ' — not rated at ' + coneLabel(cone);
-          } else {
-            opt.disabled = false;
-            opt.textContent = name + ' · ' + pct.toFixed(2) + '%';
-          }
-        });
+      function getBodyById(id) {
+        if (!id) return null;
+        for (let i = 0; i < CLAY_BODIES.length; i++) {
+          if (CLAY_BODIES[i].id === id) return CLAY_BODIES[i];
+        }
+        return null;
+      }
 
-        // If the currently selected body no longer has data, deselect it.
-        if (clayEl.value) {
-          const selectedOpt = clayEl.options[clayEl.selectedIndex];
-          if (selectedOpt && selectedOpt.disabled) {
-            clayEl.value = '';
-          }
+      function bodiesForCurrentCone() {
+        const cone = currentCone();
+        return CLAY_BODIES.filter(b => bodyShrinkageAtCone(b, cone) !== undefined);
+      }
+
+      function canonicalDisplay(body) {
+        if (!body) return '';
+        const pct = bodyShrinkageAtCone(body, currentCone());
+        if (pct === undefined) return body.name;
+        return body.name + ' · ' + pct.toFixed(2) + '%';
+      }
+
+      function clearClay() {
+        selectedClayId = '';
+        clayEl.value = '';
+        clayEl.removeAttribute('data-clay-id');
+      }
+
+      // Set the selected clay by id. Returns true on success.
+      // Fails silently if the body doesn't exist or isn't rated at the current cone.
+      function setClayById(id) {
+        const body = getBodyById(id);
+        if (!body) { clearClay(); return false; }
+        const pct = bodyShrinkageAtCone(body, currentCone());
+        if (pct === undefined) { clearClay(); return false; }
+        selectedClayId = id;
+        clayEl.value = canonicalDisplay(body);
+        clayEl.setAttribute('data-clay-id', id);
+        return true;
+      }
+
+      // Called after a cone change to keep the displayed selection consistent.
+      function refreshClaySelection() {
+        if (!selectedClayId) return;
+        const body = getBodyById(selectedClayId);
+        const pct = body ? bodyShrinkageAtCone(body, currentCone()) : undefined;
+        if (!body || pct === undefined) {
+          clearClay();
+        } else {
+          clayEl.value = canonicalDisplay(body);
         }
       }
 
       function selectedClay() {
-        const opt = clayEl.options[clayEl.selectedIndex];
-        if (!opt || !clayEl.value) return null;
+        if (!selectedClayId) return null;
+        const body = getBodyById(selectedClayId);
+        if (!body) return null;
         const cone = currentCone();
-        const shrink = optionShrinkage(opt, cone);
-        if (isNaN(shrink)) return null;
+        const pct = bodyShrinkageAtCone(body, cone);
+        if (pct === undefined) return null;
         return {
-          id: clayEl.value,
-          name: opt.dataset.name || opt.text,
-          shrinkage: shrink,
+          id: body.id,
+          name: body.name,
+          shrinkage: pct,
           cone: cone,
-          note: opt.dataset.note || null,
+          note: body.note || null,
         };
+      }
+
+      // --- Combobox panel ---
+      function escapeHtml(s) {
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function filterBodies(query) {
+        const bodies = bodiesForCurrentCone();
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) return bodies;
+        return bodies.filter(b => {
+          const hay = (b.name + ' ' + b.group).toLowerCase();
+          return hay.indexOf(q) !== -1;
+        });
+      }
+
+      function renderComboPanel(query) {
+        const cone = currentCone();
+        const filtered = filterBodies(query);
+        comboItems = filtered;
+
+        if (filtered.length === 0) {
+          const hasQuery = String(query || '').trim() !== '';
+          const ratedCount = bodiesForCurrentCone().length;
+          let msg;
+          if (ratedCount === 0) {
+            msg = 'No clay bodies rated for ' + coneLabel(cone) + '.';
+          } else if (hasQuery) {
+            msg = 'No rated bodies match that search at ' + coneLabel(cone) + '.';
+          } else {
+            msg = 'No clay bodies rated for ' + coneLabel(cone) + '.';
+          }
+          clayPanelEl.innerHTML = '<div class="combo-empty">' + escapeHtml(msg) + '</div>';
+          return;
+        }
+
+        // Group by maker, preserving the ordering in CLAY_BODIES.
+        const groupOrder = [];
+        const groupItems = {};
+        for (let i = 0; i < filtered.length; i++) {
+          const b = filtered[i];
+          if (!groupItems[b.group]) {
+            groupItems[b.group] = [];
+            groupOrder.push(b.group);
+          }
+          groupItems[b.group].push({ body: b, flatIdx: i });
+        }
+
+        let html = '';
+        for (let g = 0; g < groupOrder.length; g++) {
+          const group = groupOrder[g];
+          html += '<div class="combo-group-label">' + escapeHtml(group) + '</div>';
+          const entries = groupItems[group];
+          for (let j = 0; j < entries.length; j++) {
+            const b = entries[j].body;
+            const idx = entries[j].flatIdx;
+            const pct = bodyShrinkageAtCone(b, cone);
+            const classes = ['combo-item'];
+            if (idx === comboHighlight) classes.push('is-active');
+            if (b.id === selectedClayId) classes.push('is-selected');
+            if (b.note) classes.push('has-note');
+            html += '<div class="' + classes.join(' ') + '"' +
+              ' role="option"' +
+              ' aria-selected="' + (idx === comboHighlight ? 'true' : 'false') + '"' +
+              ' data-idx="' + idx + '"' +
+              ' data-id="' + escapeHtml(b.id) + '">' +
+              '<span class="combo-item-name">' + escapeHtml(b.name) + '</span>' +
+              '<span class="combo-item-pct">' + pct.toFixed(2) + '%</span>' +
+              '</div>';
+          }
+        }
+        clayPanelEl.innerHTML = html;
+        scrollHighlightIntoView();
+      }
+
+      function scrollHighlightIntoView() {
+        if (comboHighlight < 0) return;
+        const active = clayPanelEl.querySelector('.combo-item.is-active');
+        if (active && active.scrollIntoView) {
+          active.scrollIntoView({ block: 'nearest' });
+        }
+      }
+
+      function openCombobox() {
+        if (comboOpen) return;
+        comboOpen = true;
+        clayEl.setAttribute('aria-expanded', 'true');
+        clayPanelEl.hidden = false;
+        renderComboPanel(clayEl.value);
+      }
+
+      function closeCombobox() {
+        if (!comboOpen) return;
+        comboOpen = false;
+        comboHighlight = -1;
+        clayEl.setAttribute('aria-expanded', 'false');
+        clayPanelEl.hidden = true;
+      }
+
+      function commitSelection(id) {
+        const ok = setClayById(id);
+        if (ok) sEl.value = '';
+        closeCombobox();
+        calc();
+        saveSettings();
+        scheduleComplete();
       }
 
       function updateClayWarning() {
@@ -389,8 +519,8 @@ for (const body of clayBodies) {
       // Shrinkage % field is mutually exclusive with the clay body selector.
       // Typing here clears any selected clay body.
       sEl.addEventListener('input', () => {
-        if (sEl.value.trim() !== '' && clayEl.value) {
-          clayEl.value = '';
+        if (sEl.value.trim() !== '' && selectedClayId) {
+          clearClay();
         }
         calc();
         scheduleSave();
@@ -398,17 +528,98 @@ for (const body of clayBodies) {
       });
       sEl.addEventListener('blur', maybeAddHistory);
 
-      // Choosing a clay body clears the manual shrinkage field.
-      clayEl.addEventListener('change', () => {
-        if (clayEl.value) sEl.value = '';
-        calc();
-        saveSettings();
-        scheduleComplete();
+      // --- Clay combobox wiring ---
+      clayEl.addEventListener('focus', () => {
+        // Clear the displayed selection so the panel shows the full filtered list.
+        if (selectedClayId) clayEl.value = '';
+        comboHighlight = -1;
+        openCombobox();
+        clayEl.select();
       });
 
-      // Changing the cone relabels the clay list (and may disable the current pick).
+      clayEl.addEventListener('input', () => {
+        // Typing invalidates any committed selection.
+        if (selectedClayId) {
+          selectedClayId = '';
+          clayEl.removeAttribute('data-clay-id');
+        }
+        comboHighlight = -1;
+        openCombobox();
+        renderComboPanel(clayEl.value);
+        calc();
+        scheduleSave();
+      });
+
+      clayEl.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (!comboOpen) openCombobox();
+          if (comboItems.length === 0) return;
+          comboHighlight = (comboHighlight + 1) % comboItems.length;
+          renderComboPanel(clayEl.value);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!comboOpen) openCombobox();
+          if (comboItems.length === 0) return;
+          comboHighlight = comboHighlight <= 0 ? comboItems.length - 1 : comboHighlight - 1;
+          renderComboPanel(clayEl.value);
+        } else if (e.key === 'Enter') {
+          if (comboOpen && comboHighlight >= 0 && comboItems[comboHighlight]) {
+            e.preventDefault();
+            commitSelection(comboItems[comboHighlight].id);
+          }
+        } else if (e.key === 'Escape') {
+          if (comboOpen) {
+            e.preventDefault();
+            closeCombobox();
+            // Restore canonical display for whatever is selected (if anything).
+            if (selectedClayId) {
+              const body = getBodyById(selectedClayId);
+              if (body) clayEl.value = canonicalDisplay(body);
+            } else {
+              clayEl.value = '';
+            }
+            clayEl.blur();
+          }
+        }
+      });
+
+      clayEl.addEventListener('blur', () => {
+        // Restore display state after focus leaves the field.
+        if (selectedClayId) {
+          const body = getBodyById(selectedClayId);
+          if (body) clayEl.value = canonicalDisplay(body);
+        } else {
+          clayEl.value = '';
+        }
+        closeCombobox();
+        calc();
+        saveSettings();
+      });
+
+      // Use mousedown so the click lands before the input's blur fires.
+      clayPanelEl.addEventListener('mousedown', (e) => {
+        const item = e.target.closest && e.target.closest('.combo-item');
+        if (!item) return;
+        e.preventDefault(); // keep focus on input for keyboard follow-up
+        const id = item.getAttribute('data-id');
+        if (id) commitSelection(id);
+      });
+
+      // Clicking outside the combobox closes the panel.
+      document.addEventListener('mousedown', (e) => {
+        if (!comboOpen) return;
+        if (clayComboboxEl.contains(e.target)) return;
+        closeCombobox();
+      });
+
+      // Changing the cone re-filters the list and may deselect an unavailable body.
       coneEl.addEventListener('change', () => {
-        refreshClayOptionsForCone();
+        refreshClaySelection();
+        if (comboOpen) {
+          comboHighlight = -1;
+          renderComboPanel(clayEl.value);
+        }
         calc();
         saveSettings();
         scheduleComplete();
@@ -489,21 +700,23 @@ for (const body of clayBodies) {
               mode = e.mode;
               updateModeUI();
             }
-            // Set cone first so clay option labels and disabled state are right.
+            // Set cone first so the clay lookup resolves at the right cone.
             if (e.cone && coneEl.value !== e.cone) {
               coneEl.value = e.cone;
             }
-            refreshClayOptionsForCone();
 
             wEl.value = e.w !== null ? e.w : '';
             hEl.value = e.h !== null ? e.h : '';
             // Restore either the clay body or the manual %, never both.
-            if (e.clayId) {
-              clayEl.value = e.clayId;
+            if (e.clayId && setClayById(e.clayId)) {
               sEl.value = '';
             } else {
-              clayEl.value = '';
+              clearClay();
               sEl.value = e.s;
+            }
+            if (comboOpen) {
+              comboHighlight = -1;
+              renderComboPanel(clayEl.value);
             }
             const clayId = e.clayId || '';
             const cone = e.cone || currentCone();
@@ -522,7 +735,7 @@ for (const body of clayBodies) {
             lastShrinkage: sEl.value,
             lastW: wEl.value,
             lastH: hEl.value,
-            lastClay: clayEl.value,
+            lastClay: selectedClayId,
           }));
         } catch (e) { /* ignore */ }
       }
@@ -544,29 +757,17 @@ for (const body of clayBodies) {
               const coneOpt = coneEl.querySelector('option[value="' + String(d.cone).replace(/"/g, '\\"') + '"]');
               if (coneOpt) coneEl.value = d.cone;
             }
-            // Apply cone-dependent option state before restoring the clay pick.
-            refreshClayOptionsForCone();
 
             if (d.lastW) wEl.value = d.lastW;
             if (d.lastH) hEl.value = d.lastH;
             // Restore either the clay body (preferred) or the manual %.
-            if (d.lastClay) {
-              const opt = clayEl.querySelector('option[value="' + d.lastClay.replace(/"/g, '\\"') + '"]');
-              if (opt && !opt.disabled) {
-                clayEl.value = d.lastClay;
-                sEl.value = '';
-              } else if (d.lastShrinkage) {
-                sEl.value = d.lastShrinkage;
-              }
+            if (d.lastClay && setClayById(d.lastClay)) {
+              sEl.value = '';
             } else if (d.lastShrinkage) {
               sEl.value = d.lastShrinkage;
             }
-          } else {
-            refreshClayOptionsForCone();
           }
-        } catch (e) {
-          refreshClayOptionsForCone();
-        }
+        } catch (e) { /* no settings yet */ }
 
         try {
           const raw = localStorage.getItem(STORAGE_KEY + ':history');
@@ -700,8 +901,18 @@ for (const body of clayBodies) {
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: 16px;
-      overflow: hidden;
       margin-bottom: 1.25rem;
+      /* no overflow clipping — the clay combobox panel needs to escape */
+    }
+
+    .input-row:first-child {
+      border-top-left-radius: 16px;
+      border-top-right-radius: 16px;
+    }
+
+    .input-row:last-child {
+      border-bottom-left-radius: 16px;
+      border-bottom-right-radius: 16px;
     }
 
     .input-row {
@@ -791,6 +1002,133 @@ for (const body of clayBodies) {
     .select-field optgroup {
       color: var(--color-tan);
       font-style: italic;
+    }
+
+    /* --- Clay body combobox --- */
+    .input-wrap.combobox {
+      position: relative;
+    }
+
+    .combobox-input {
+      cursor: text;
+      padding-right: 1.75rem;
+    }
+
+    .combobox-input::placeholder {
+      color: var(--color-muted);
+      opacity: 0.55;
+      font-style: italic;
+      font-size: 1.1rem;
+    }
+
+    .combobox-chevron {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--color-tan);
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .combobox-panel {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      left: 0;
+      right: 0;
+      z-index: 10;
+      max-height: 320px;
+      overflow-y: auto;
+      background: #1a110b;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.6),
+                  0 2px 6px -2px rgba(0, 0, 0, 0.4);
+      padding: 0.4rem 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-border) transparent;
+    }
+
+    .combobox-panel[hidden] {
+      display: none;
+    }
+
+    .combobox-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .combobox-panel::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 3px;
+    }
+
+    .combo-group-label {
+      padding: 0.65rem 1rem 0.35rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+      opacity: 0.75;
+    }
+
+    .combo-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      transition: background 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .combo-item.is-active {
+      background: var(--color-surface-2);
+    }
+
+    .combo-item.is-selected .combo-item-name {
+      color: var(--color-gold);
+    }
+
+    .combo-item.is-selected::before {
+      content: '•';
+      color: var(--color-gold);
+      margin-right: 0.4rem;
+      line-height: 1;
+    }
+
+    .combo-item.has-note .combo-item-name::after {
+      content: ' \26A0';
+      color: #d4a952;
+      font-size: 0.7em;
+      margin-left: 0.25rem;
+      vertical-align: middle;
+    }
+
+    .combo-item-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      color: var(--color-cream);
+    }
+
+    .combo-item-pct {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--color-tan);
+      white-space: nowrap;
+    }
+
+    .combo-empty {
+      padding: 1rem;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--color-muted);
     }
 
     .input-suffix {
