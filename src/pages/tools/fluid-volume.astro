@@ -150,6 +150,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         <li>Vessel is modeled as a <strong>frustum</strong> (tapered cylinder). Set Mouth Ø = Base Ø for a perfect cylinder.</li>
         <li><strong>Clay weight</strong> assumes a wet-clay density of ~1.85 g/cm³. Wedged weight varies by body and moisture.</li>
         <li>All math assumes <strong>uniform wall thickness</strong> and a flat base of the specified thickness.</li>
+        <li><strong>Fractions work:</strong> type <em>1/8</em>, <em>3/4</em>, or even <em>1 1/2</em> &mdash; or use decimals like <em>0.125</em>.</li>
       </ul>
     </aside>
 
@@ -215,6 +216,23 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         if (s === null || s === undefined) return null;
         s = String(s).trim();
         if (!s) return null;
+        // Mixed fraction, e.g. "1 1/2" → 1.5
+        const mixed = s.match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        if (mixed) {
+          const w = parseFloat(mixed[1]);
+          const num = parseFloat(mixed[2]);
+          const den = parseFloat(mixed[3]);
+          if (den === 0 || isNaN(w) || isNaN(num) || isNaN(den)) return null;
+          return w + num / den;
+        }
+        // Simple fraction, e.g. "1/8" → 0.125
+        const frac = s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        if (frac) {
+          const num = parseFloat(frac[1]);
+          const den = parseFloat(frac[2]);
+          if (den === 0 || isNaN(num) || isNaN(den)) return null;
+          return num / den;
+        }
         const n = parseFloat(s);
         return isNaN(n) ? null : n;
       }
