@@ -1,0 +1,1361 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import CoffeeTip from '../../components/CoffeeTip.astro';
+import { clayBodies, cones, defaultCone } from '../../data/clay';
+---
+
+<Layout
+  title="Throwing Weight Guide — Rite & Grain"
+  description="Pick a clay body and enter your target finished dimensions — get the wedged-up weight you need, with optional handle allowance."
+  path="/tools/throwing-weight/"
+>
+  <nav class="site-nav">
+    <a href="/" class="brand">Rite <em>&amp;</em> Grain</a>
+    <a href="/tools/">&larr; Tools</a>
+  </nav>
+
+  <main class="tool-page">
+    <header class="tool-header">
+      <div class="rule"><span class="rule-ornament">&#10022;</span></div>
+      <h1>Throwing Weight</h1>
+      <p class="sub">Workshop Calc</p>
+    </header>
+
+    <p class="mode-hint">
+      Enter the <em>finished</em> dimensions you&rsquo;re aiming for &mdash; we&rsquo;ll tell you how much clay to wedge up, scaled for your body&rsquo;s shrinkage.
+    </p>
+
+    <div class="inputs">
+      <div class="input-row unit-row">
+        <label class="input-label">Length Unit</label>
+        <div class="input-wrap unit-toggle" role="radiogroup" aria-label="Length unit">
+          <button class="unit-btn active" data-unit="in" type="button" role="radio" aria-checked="true">in</button>
+          <button class="unit-btn" data-unit="cm" type="button" role="radio" aria-checked="false">cm</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="cone">Cone</label>
+        <div class="input-wrap">
+          <select class="select-field" id="cone" autocomplete="off">
+            {cones.map((c) => (
+              <option value={c.id} selected={c.id === defaultCone}>{c.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="clay">Clay Body</label>
+        <div class="input-wrap combobox" id="clayCombobox">
+          <input
+            class="input-field combobox-input"
+            id="clay"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="clayPanel"
+            placeholder="Search clay bodies…"
+          />
+          <span class="combobox-chevron" aria-hidden="true">&#9662;</span>
+          <div class="combobox-panel" id="clayPanel" role="listbox" hidden></div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="height">Height</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="height" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="mouthD">Top Ø</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="mouthD" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="baseD">Base Ø</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="baseD" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="wall">Walls</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="wall" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="baseT">Base Thick</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="baseT" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="throwWaste">Throw Waste</label>
+        <div class="input-wrap slider-wrap">
+          <input class="range-slider" type="range" min="0" max="15" step="1" value="5" id="throwWaste" />
+          <span class="slider-value" id="throwWasteValue">5%</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="trimWaste">Trim Waste</label>
+        <div class="input-wrap slider-wrap">
+          <input class="range-slider" type="range" min="0" max="30" step="1" value="15" id="trimWaste" />
+          <span class="slider-value" id="trimWasteValue">15%</span>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <label class="input-label" for="includeHandle">Handle</label>
+        <div class="input-wrap checkbox-wrap">
+          <label class="checkbox-inline">
+            <input type="checkbox" id="includeHandle" />
+            <span class="checkbox-label">Include handle allowance</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="input-row handle-only" id="handleStyleRow" hidden>
+        <label class="input-label" for="handleStyle">Style</label>
+        <div class="input-wrap">
+          <select class="select-field" id="handleStyle" autocomplete="off">
+            <option value="slab" selected>Slab — ¼″ × 1″ × 7″ (~53 g)</option>
+            <option value="pulled-s">Pulled, small — ~25 g</option>
+            <option value="pulled-m">Pulled, medium — ~45 g</option>
+            <option value="pulled-l">Pulled, large — ~75 g</option>
+            <option value="molded">Molded — ~50 g</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-row handle-only" id="handleWeightRow" hidden>
+        <label class="input-label" for="handleWeight">Weight</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="handleWeight" placeholder="&mdash;" />
+          <span class="unit-echo">g</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="clay-warning" id="clayWarning" role="alert" hidden>
+      <span class="warn-icon" aria-hidden="true">&#9888;</span>
+      <span id="clayWarningText"></span>
+    </p>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="result-label">Wedge up</div>
+      <div class="result-value" id="resultValue">&mdash;</div>
+      <div class="result-sub" id="resultSub">&nbsp;</div>
+      <div class="result-breakdown" id="resultBreakdown" hidden></div>
+    </section>
+
+    <aside class="notes">
+      <h3>Notes</h3>
+      <ul>
+        <li>Vessel is modeled as a <strong>frustum</strong> (tapered cylinder). Set Top Ø = Base Ø for a straight-walled cylinder.</li>
+        <li><strong>Clay weight</strong> assumes wet-clay density of ~1.85 g/cm³. Actual wedge weight varies by body and moisture.</li>
+        <li>Math is pure clay mass of the finished form &mdash; it does <em>not</em> add a throwing-waste allowance. Most potters add 10–20% to account for trim loss.</li>
+        <li>The slab handle preset uses Christopher&rsquo;s method: a ¼″ × 1″ × 7″ strip.</li>
+      </ul>
+    </aside>
+
+    <CoffeeTip />
+  </main>
+
+  <footer class="footer">
+    &copy; 2025 Rite &amp; Grain &nbsp;&middot;&nbsp; All Rights Reserved
+  </footer>
+
+  <script is:inline define:vars={{ CLAY_BODIES: clayBodies }}>
+    (function () {
+      // -------- constants --------
+      const CM_PER_IN    = 2.54;
+      const CM3_PER_IN3  = 16.387064;
+      const CLAY_DENSITY_G_CM3 = 1.85;
+      const G_PER_OZ     = 28.3495;
+      const G_PER_LB     = 453.592;
+      const STORAGE_KEY  = 'rag-throwing-v1';
+
+      const HANDLE_PRESETS = {
+        'slab':     53,
+        'pulled-s': 25,
+        'pulled-m': 45,
+        'pulled-l': 75,
+        'molded':   50,
+      };
+
+      // -------- elements --------
+      const unitBtns      = document.querySelectorAll('.unit-btn');
+      const unitEchoes    = document.querySelectorAll('[data-len-unit]');
+      const coneEl        = document.getElementById('cone');
+      const clayEl        = document.getElementById('clay');
+      const clayComboboxEl = document.getElementById('clayCombobox');
+      const clayPanelEl   = document.getElementById('clayPanel');
+      const warnEl        = document.getElementById('clayWarning');
+      const warnTextEl    = document.getElementById('clayWarningText');
+      const heightEl      = document.getElementById('height');
+      const mouthEl       = document.getElementById('mouthD');
+      const baseEl        = document.getElementById('baseD');
+      const wallEl        = document.getElementById('wall');
+      const baseTEl       = document.getElementById('baseT');
+      const throwWasteEl = document.getElementById('throwWaste');
+      const throwWasteValueEl = document.getElementById('throwWasteValue');
+      const trimWasteEl = document.getElementById('trimWaste');
+      const trimWasteValueEl = document.getElementById('trimWasteValue');
+      const includeHandleEl = document.getElementById('includeHandle');
+      const handleStyleRow = document.getElementById('handleStyleRow');
+      const handleWeightRow = document.getElementById('handleWeightRow');
+      const handleStyleEl = document.getElementById('handleStyle');
+      const handleWeightEl = document.getElementById('handleWeight');
+      const resultValueEl = document.getElementById('resultValue');
+      const resultSubEl   = document.getElementById('resultSub');
+      const resultBreakEl = document.getElementById('resultBreakdown');
+
+      // -------- state --------
+      let lengthUnit = 'in';
+      let selectedClayId = '';
+      let comboOpen = false;
+      let comboHighlight = -1;
+      let comboItems = [];
+      let saveTimer = null;
+
+      // -------- utilities --------
+      function parseNum(s) {
+        if (s === null || s === undefined) return null;
+        s = String(s).trim();
+        if (!s) return null;
+        const n = parseFloat(s);
+        return isNaN(n) ? null : n;
+      }
+
+      function fmt(n, digits) {
+        if (n === null || n === undefined || isNaN(n)) return '—';
+        if (digits === undefined) digits = 3;
+        return parseFloat(n.toFixed(digits)).toString();
+      }
+
+      function currentCone() { return coneEl.value || '6'; }
+      function coneLabel(c)  { return 'Cone ' + c; }
+
+      function bodyShrinkageAtCone(body, cone) {
+        if (!body || !body.shrinkage) return undefined;
+        return body.shrinkage[cone];
+      }
+
+      function getBodyById(id) {
+        if (!id) return null;
+        for (let i = 0; i < CLAY_BODIES.length; i++) {
+          if (CLAY_BODIES[i].id === id) return CLAY_BODIES[i];
+        }
+        return null;
+      }
+
+      function bodiesForCurrentCone() {
+        const cone = currentCone();
+        return CLAY_BODIES.filter(b => bodyShrinkageAtCone(b, cone) !== undefined);
+      }
+
+      function canonicalDisplay(body) {
+        if (!body) return '';
+        const pct = bodyShrinkageAtCone(body, currentCone());
+        if (pct === undefined) return body.name;
+        return body.name + ' · ' + pct.toFixed(2) + '%';
+      }
+
+      function clearClay() {
+        selectedClayId = '';
+        clayEl.value = '';
+        clayEl.removeAttribute('data-clay-id');
+      }
+
+      function setClayById(id) {
+        const body = getBodyById(id);
+        if (!body) { clearClay(); return false; }
+        const pct = bodyShrinkageAtCone(body, currentCone());
+        if (pct === undefined) { clearClay(); return false; }
+        selectedClayId = id;
+        clayEl.value = canonicalDisplay(body);
+        clayEl.setAttribute('data-clay-id', id);
+        return true;
+      }
+
+      function refreshClaySelection() {
+        if (!selectedClayId) return;
+        const body = getBodyById(selectedClayId);
+        const pct = body ? bodyShrinkageAtCone(body, currentCone()) : undefined;
+        if (!body || pct === undefined) clearClay();
+        else clayEl.value = canonicalDisplay(body);
+      }
+
+      function selectedClay() {
+        if (!selectedClayId) return null;
+        const body = getBodyById(selectedClayId);
+        if (!body) return null;
+        const cone = currentCone();
+        const pct = bodyShrinkageAtCone(body, cone);
+        if (pct === undefined) return null;
+        return { id: body.id, name: body.name, shrinkage: pct, cone: cone, note: body.note || null };
+      }
+
+      function updateClayWarning() {
+        const clay = selectedClay();
+        if (clay && clay.note) {
+          warnTextEl.textContent = clay.name + ' — ' + clay.note + '.';
+          warnEl.hidden = false;
+        } else {
+          warnEl.hidden = true;
+        }
+      }
+
+      // -------- combobox --------
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function filterBodies(query) {
+        const bodies = bodiesForCurrentCone();
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) return bodies;
+        return bodies.filter(b => (b.name + ' ' + b.group).toLowerCase().indexOf(q) !== -1);
+      }
+
+      function renderComboPanel(query) {
+        const cone = currentCone();
+        const filtered = filterBodies(query);
+        comboItems = filtered;
+
+        if (filtered.length === 0) {
+          const hasQ = String(query || '').trim() !== '';
+          const ratedCount = bodiesForCurrentCone().length;
+          const msg = ratedCount === 0
+            ? 'No clay bodies rated for ' + coneLabel(cone) + '.'
+            : (hasQ ? 'No rated bodies match that search at ' + coneLabel(cone) + '.'
+                    : 'No clay bodies rated for ' + coneLabel(cone) + '.');
+          clayPanelEl.innerHTML = '<div class="combo-empty">' + escapeHtml(msg) + '</div>';
+          return;
+        }
+
+        const groupOrder = [];
+        const groupItems = {};
+        for (let i = 0; i < filtered.length; i++) {
+          const b = filtered[i];
+          if (!groupItems[b.group]) { groupItems[b.group] = []; groupOrder.push(b.group); }
+          groupItems[b.group].push({ body: b, flatIdx: i });
+        }
+
+        let html = '';
+        for (let g = 0; g < groupOrder.length; g++) {
+          const group = groupOrder[g];
+          html += '<div class="combo-group-label">' + escapeHtml(group) + '</div>';
+          const entries = groupItems[group];
+          for (let j = 0; j < entries.length; j++) {
+            const b = entries[j].body;
+            const idx = entries[j].flatIdx;
+            const pct = bodyShrinkageAtCone(b, cone);
+            const classes = ['combo-item'];
+            if (idx === comboHighlight) classes.push('is-active');
+            if (b.id === selectedClayId) classes.push('is-selected');
+            if (b.note) classes.push('has-note');
+            html += '<div class="' + classes.join(' ') + '"' +
+              ' role="option" aria-selected="' + (idx === comboHighlight ? 'true' : 'false') + '"' +
+              ' data-idx="' + idx + '" data-id="' + escapeHtml(b.id) + '">' +
+              '<span class="combo-item-name">' + escapeHtml(b.name) + '</span>' +
+              '<span class="combo-item-pct">' + pct.toFixed(2) + '%</span></div>';
+          }
+        }
+        clayPanelEl.innerHTML = html;
+        const active = clayPanelEl.querySelector('.combo-item.is-active');
+        if (active && active.scrollIntoView) active.scrollIntoView({ block: 'nearest' });
+      }
+
+      function openCombobox() {
+        if (comboOpen) return;
+        comboOpen = true;
+        clayEl.setAttribute('aria-expanded', 'true');
+        clayPanelEl.hidden = false;
+        renderComboPanel(clayEl.value);
+      }
+
+      function closeCombobox() {
+        if (!comboOpen) return;
+        comboOpen = false;
+        comboHighlight = -1;
+        clayEl.setAttribute('aria-expanded', 'false');
+        clayPanelEl.hidden = true;
+      }
+
+      function commitSelection(id) {
+        setClayById(id);
+        closeCombobox();
+        recalc();
+        saveSettings();
+      }
+
+      // -------- unit helpers --------
+      function toInches(val) {
+        if (val === null || isNaN(val)) return null;
+        return lengthUnit === 'cm' ? val / CM_PER_IN : val;
+      }
+
+      function fromInches(inches) {
+        if (inches === null || isNaN(inches)) return null;
+        return lengthUnit === 'cm' ? inches * CM_PER_IN : inches;
+      }
+
+      function lenStr(inches) {
+        const v = fromInches(inches);
+        return fmt(v, lengthUnit === 'cm' ? 2 : 3) + ' ' + lengthUnit;
+      }
+
+      function weightStr(g) {
+        if (g === null || isNaN(g)) return '—';
+        const lb = g / G_PER_LB;
+        if (g >= 1000) return fmt(g / 1000, 2) + ' kg · ' + fmt(lb, 2) + ' lb';
+        if (lb >= 0.5) return fmt(g, 0) + ' g · ' + fmt(lb, 2) + ' lb';
+        const oz = g / G_PER_OZ;
+        return fmt(g, 0) + ' g · ' + fmt(oz, 1) + ' oz';
+      }
+
+      // -------- math --------
+      function frustumVolume(h, R, r) {
+        return Math.PI * h / 3 * (R*R + R*r + r*r);
+      }
+
+      function calc() {
+        const height = toInches(parseNum(heightEl.value));
+        const mouthD = toInches(parseNum(mouthEl.value));
+        const baseD  = toInches(parseNum(baseEl.value));
+        const wall   = toInches(parseNum(wallEl.value));
+        const baseT  = toInches(parseNum(baseTEl.value));
+
+        const clay = selectedClay();
+        if (height === null || mouthD === null || baseD === null || wall === null || baseT === null) return null;
+        if (!clay) return { error: 'Choose a clay body above.' };
+        if (height <= 0 || mouthD <= 0 || baseD <= 0 || wall <= 0 || baseT <= 0) return { error: 'All values must be positive.' };
+
+        const intMouthR = (mouthD - 2 * wall) / 2;
+        const intBaseR  = (baseD  - 2 * wall) / 2;
+        if (intMouthR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
+
+        const intHeight = height - baseT;
+        if (intHeight <= 0) return { error: 'Base thickness meets or exceeds height.' };
+
+        // Final (entered) dimensions → final clay volume
+        const mouthR = mouthD / 2;
+        const baseR  = baseD  / 2;
+        const extVolFinal = frustumVolume(height, mouthR, baseR);
+        const intVolFinal = frustumVolume(intHeight, intMouthR, intBaseR);
+        const clayVolFinalIn3 = extVolFinal - intVolFinal;
+
+        // Scale to thrown
+        const s = clay.shrinkage / 100;
+        const throwFactor = 1 / (1 - s);
+        const throwFactor3 = throwFactor * throwFactor * throwFactor;
+        const clayVolThrownIn3 = clayVolFinalIn3 * throwFactor3;
+        const clayVolPieceCm3 = clayVolThrownIn3 * CM3_PER_IN3;
+        const bodyPieceG = clayVolPieceCm3 * CLAY_DENSITY_G_CM3;
+
+        // Throwing + trimming waste — applied as compounding buffers on the body.
+        const throwPct = parseNum(throwWasteEl.value) || 0;
+        const trimPct  = parseNum(trimWasteEl.value)  || 0;
+        const throwAddG = bodyPieceG * (throwPct / 100);
+        const afterThrowG = bodyPieceG + throwAddG;
+        const trimAddG  = afterThrowG * (trimPct / 100);
+        const bodyWeightG = afterThrowG + trimAddG;
+
+        // Handle allowance (already wet weight; no waste applied)
+        let handleWeightG = 0;
+        let handleStyle = null;
+        if (includeHandleEl.checked) {
+          const w = parseNum(handleWeightEl.value);
+          handleWeightG = (w !== null && w > 0) ? w : 0;
+          handleStyle = handleStyleEl.value;
+        }
+
+        const totalWeightG = bodyWeightG + handleWeightG;
+        const totalVolCm3 = (bodyWeightG + handleWeightG) / CLAY_DENSITY_G_CM3;
+        const totalVolIn3 = totalVolCm3 / CM3_PER_IN3;
+
+        return {
+          clay: clay,
+          // dims (final, entered)
+          height: height, mouthD: mouthD, baseD: baseD, wall: wall, baseT: baseT,
+          // thrown dims
+          thrownHeight: height * throwFactor,
+          thrownMouthD: mouthD * throwFactor,
+          thrownBaseD:  baseD  * throwFactor,
+          thrownWall:   wall   * throwFactor,
+          thrownBaseT:  baseT  * throwFactor,
+          // volumes / weights
+          clayVolPieceIn3: clayVolThrownIn3,
+          clayVolPieceCm3: clayVolPieceCm3,
+          bodyPieceG: bodyPieceG,
+          throwPct: throwPct,
+          trimPct: trimPct,
+          throwAddG: throwAddG,
+          trimAddG: trimAddG,
+          bodyWeightG: bodyWeightG,
+          handleWeightG: handleWeightG,
+          handleStyle: handleStyle,
+          totalWeightG: totalWeightG,
+          totalVolCm3: totalVolCm3,
+          totalVolIn3: totalVolIn3,
+        };
+      }
+
+      function renderResult(r) {
+        updateClayWarning();
+
+        if (!r) {
+          resultValueEl.textContent = '—';
+          resultSubEl.innerHTML = '&nbsp;';
+          resultBreakEl.hidden = true;
+          return;
+        }
+        if (r.error) {
+          resultValueEl.textContent = '—';
+          resultSubEl.textContent = r.error;
+          resultBreakEl.hidden = true;
+          return;
+        }
+
+        resultValueEl.textContent = weightStr(r.totalWeightG);
+        resultSubEl.textContent =
+          r.clay.name + ' · ' + coneLabel(r.clay.cone) +
+          ' · ' + r.clay.shrinkage.toFixed(2) + '% shrinkage';
+
+        const throwLine = r.throwPct > 0
+          ? '<dt>Throw waste (' + r.throwPct + '%)</dt>' +
+            '<dd>+' + fmt(r.throwAddG, 0) + ' g</dd>'
+          : '';
+        const trimLine = r.trimPct > 0
+          ? '<dt>Trim waste (' + r.trimPct + '%)</dt>' +
+            '<dd>+' + fmt(r.trimAddG, 0) + ' g</dd>'
+          : '';
+        const handleLine = r.handleWeightG > 0
+          ? '<dt>Handle (' + escapeHtml(handleStyleLabel(r.handleStyle)) + ')</dt>' +
+            '<dd>' + fmt(r.handleWeightG, 0) + ' g</dd>'
+          : '';
+
+        resultBreakEl.hidden = false;
+        resultBreakEl.innerHTML =
+          '<dl>' +
+            '<dt>Throw to</dt>' +
+            '<dd>' + lenStr(r.thrownHeight) + ' H · ' + lenStr(r.thrownMouthD) + ' ⌀ top · ' + lenStr(r.thrownBaseD) + ' ⌀ base</dd>' +
+            '<dt>Thrown walls</dt>' +
+            '<dd>' + lenStr(r.thrownWall) + ' · base ' + lenStr(r.thrownBaseT) + ' thick</dd>' +
+            '<dt>Body (piece mass)</dt>' +
+            '<dd>' + weightStr(r.bodyPieceG) + '</dd>' +
+            throwLine +
+            trimLine +
+            handleLine +
+            '<dt>Total</dt>' +
+            '<dd>' + weightStr(r.totalWeightG) + '</dd>' +
+            '<dt>Clay volume (wet)</dt>' +
+            '<dd>' + fmt(r.totalVolCm3, 0) + ' cm³ · ' + fmt(r.totalVolIn3, 2) + ' in³</dd>' +
+          '</dl>';
+      }
+
+      function handleStyleLabel(v) {
+        return v === 'slab' ? 'slab'
+             : v === 'pulled-s' ? 'pulled, small'
+             : v === 'pulled-m' ? 'pulled, medium'
+             : v === 'pulled-l' ? 'pulled, large'
+             : v === 'molded'   ? 'molded'
+             : v === 'custom'   ? 'custom'
+             : v || '';
+      }
+
+      function recalc() { renderResult(calc()); }
+
+      // -------- handle section --------
+      function syncHandleUI() {
+        const on = includeHandleEl.checked;
+        handleStyleRow.hidden = !on;
+        handleWeightRow.hidden = !on;
+      }
+
+      function applyHandleStyle(style) {
+        // Autofill weight from preset if not custom.
+        if (style !== 'custom' && HANDLE_PRESETS[style] !== undefined) {
+          handleWeightEl.value = String(HANDLE_PRESETS[style]);
+        }
+      }
+
+      includeHandleEl.addEventListener('change', () => {
+        syncHandleUI();
+        if (includeHandleEl.checked && !handleWeightEl.value) {
+          applyHandleStyle(handleStyleEl.value);
+        }
+        recalc();
+        saveSettings();
+      });
+
+      handleStyleEl.addEventListener('change', () => {
+        applyHandleStyle(handleStyleEl.value);
+        recalc();
+        saveSettings();
+      });
+
+      handleWeightEl.addEventListener('input', () => {
+        // Typing in the weight field flips the style to "custom" so subsequent
+        // style changes don't stomp the user's value unexpectedly.
+        if (handleStyleEl.value !== 'custom') handleStyleEl.value = 'custom';
+        recalc();
+        scheduleSave();
+      });
+
+      // -------- unit toggle --------
+      function setLengthUnit(u) {
+        if (u !== 'in' && u !== 'cm') return;
+        if (u === lengthUnit) return;
+        const prev = lengthUnit;
+        lengthUnit = u;
+
+        const factor = (prev === 'in' && u === 'cm') ? CM_PER_IN
+                     : (prev === 'cm' && u === 'in') ? (1 / CM_PER_IN)
+                     : 1;
+        [heightEl, mouthEl, baseEl, wallEl, baseTEl].forEach(el => {
+          const n = parseNum(el.value);
+          if (n !== null) el.value = fmt(n * factor, u === 'cm' ? 2 : 3);
+        });
+
+        unitBtns.forEach(b => {
+          const active = b.dataset.unit === u;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        unitEchoes.forEach(el => { el.textContent = u; });
+
+        recalc();
+        saveSettings();
+      }
+
+      unitBtns.forEach(b => b.addEventListener('click', () => setLengthUnit(b.dataset.unit)));
+
+      // -------- waste sliders --------
+      function updateSliderFill(el) {
+        const min = parseFloat(el.min) || 0;
+        const max = parseFloat(el.max) || 100;
+        const val = parseFloat(el.value) || 0;
+        const pct = ((val - min) / (max - min)) * 100;
+        el.style.background =
+          'linear-gradient(to right, var(--color-gold) 0%, var(--color-gold) ' + pct + '%, ' +
+          'var(--color-border) ' + pct + '%, var(--color-border) 100%)';
+      }
+
+      function wireWasteSlider(sliderEl, valueEl) {
+        const sync = () => {
+          valueEl.textContent = sliderEl.value + '%';
+          updateSliderFill(sliderEl);
+        };
+        sliderEl.addEventListener('input', () => {
+          sync();
+          recalc();
+          scheduleSave();
+        });
+        sync();
+      }
+      wireWasteSlider(throwWasteEl, throwWasteValueEl);
+      wireWasteSlider(trimWasteEl, trimWasteValueEl);
+
+      // -------- input listeners --------
+      [heightEl, mouthEl, baseEl, wallEl, baseTEl].forEach(el => {
+        el.addEventListener('input', () => { recalc(); scheduleSave(); });
+      });
+
+      coneEl.addEventListener('change', () => {
+        refreshClaySelection();
+        if (comboOpen) { comboHighlight = -1; renderComboPanel(clayEl.value); }
+        recalc();
+        saveSettings();
+      });
+
+      // -------- clay combobox wiring --------
+      clayEl.addEventListener('focus', () => {
+        if (selectedClayId) clayEl.value = '';
+        comboHighlight = -1;
+        openCombobox();
+        clayEl.select();
+      });
+
+      clayEl.addEventListener('input', () => {
+        if (selectedClayId) { selectedClayId = ''; clayEl.removeAttribute('data-clay-id'); }
+        comboHighlight = -1;
+        openCombobox();
+        renderComboPanel(clayEl.value);
+        recalc();
+        scheduleSave();
+      });
+
+      clayEl.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (!comboOpen) openCombobox();
+          if (comboItems.length === 0) return;
+          comboHighlight = (comboHighlight + 1) % comboItems.length;
+          renderComboPanel(clayEl.value);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!comboOpen) openCombobox();
+          if (comboItems.length === 0) return;
+          comboHighlight = comboHighlight <= 0 ? comboItems.length - 1 : comboHighlight - 1;
+          renderComboPanel(clayEl.value);
+        } else if (e.key === 'Enter') {
+          if (comboOpen && comboHighlight >= 0 && comboItems[comboHighlight]) {
+            e.preventDefault();
+            commitSelection(comboItems[comboHighlight].id);
+          }
+        } else if (e.key === 'Escape') {
+          if (comboOpen) {
+            e.preventDefault();
+            closeCombobox();
+            if (selectedClayId) {
+              const body = getBodyById(selectedClayId);
+              if (body) clayEl.value = canonicalDisplay(body);
+            } else {
+              clayEl.value = '';
+            }
+            clayEl.blur();
+          }
+        }
+      });
+
+      clayEl.addEventListener('blur', () => {
+        if (selectedClayId) {
+          const body = getBodyById(selectedClayId);
+          if (body) clayEl.value = canonicalDisplay(body);
+        } else {
+          clayEl.value = '';
+        }
+        closeCombobox();
+        recalc();
+        saveSettings();
+      });
+
+      clayPanelEl.addEventListener('mousedown', (e) => {
+        const item = e.target.closest && e.target.closest('.combo-item');
+        if (!item) return;
+        e.preventDefault();
+        const id = item.getAttribute('data-id');
+        if (id) commitSelection(id);
+      });
+
+      document.addEventListener('mousedown', (e) => {
+        if (!comboOpen) return;
+        if (clayComboboxEl.contains(e.target)) return;
+        closeCombobox();
+      });
+
+      // -------- persistence --------
+      function scheduleSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveSettings, 400);
+      }
+
+      function saveSettings() {
+        try {
+          localStorage.setItem(STORAGE_KEY + ':settings', JSON.stringify({
+            lengthUnit: lengthUnit,
+            cone: coneEl.value,
+            lastClay: selectedClayId,
+            height: heightEl.value,
+            mouthD: mouthEl.value,
+            baseD: baseEl.value,
+            wall: wallEl.value,
+            baseT: baseTEl.value,
+            throwWaste: throwWasteEl.value,
+            trimWaste: trimWasteEl.value,
+            includeHandle: includeHandleEl.checked,
+            handleStyle: handleStyleEl.value,
+            handleWeight: handleWeightEl.value,
+          }));
+        } catch (e) { /* ignore */ }
+      }
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY + ':settings');
+          if (!raw) return;
+          const d = JSON.parse(raw);
+          if (d.lengthUnit === 'in' || d.lengthUnit === 'cm') lengthUnit = d.lengthUnit;
+          if (d.cone) {
+            const opt = coneEl.querySelector('option[value="' + String(d.cone).replace(/"/g, '\\"') + '"]');
+            if (opt) coneEl.value = d.cone;
+          }
+          if (d.height !== undefined) heightEl.value = d.height;
+          if (d.mouthD !== undefined) mouthEl.value  = d.mouthD;
+          if (d.baseD  !== undefined) baseEl.value   = d.baseD;
+          if (d.wall   !== undefined) wallEl.value   = d.wall;
+          if (d.baseT  !== undefined) baseTEl.value  = d.baseT;
+          if (d.throwWaste !== undefined) throwWasteEl.value = d.throwWaste;
+          if (d.trimWaste  !== undefined) trimWasteEl.value  = d.trimWaste;
+          if (d.includeHandle) includeHandleEl.checked = true;
+          if (d.handleStyle) {
+            const opt = handleStyleEl.querySelector('option[value="' + String(d.handleStyle).replace(/"/g, '\\"') + '"]');
+            if (opt) handleStyleEl.value = d.handleStyle;
+          }
+          if (d.handleWeight !== undefined) handleWeightEl.value = d.handleWeight;
+          if (d.lastClay) setClayById(d.lastClay);
+        } catch (e) { /* no settings yet */ }
+      }
+
+      // -------- init --------
+      load();
+      unitBtns.forEach(b => {
+        const active = b.dataset.unit === lengthUnit;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+      unitEchoes.forEach(el => { el.textContent = lengthUnit; });
+      // Re-sync slider fill + value after load (values may have changed)
+      throwWasteValueEl.textContent = throwWasteEl.value + '%';
+      trimWasteValueEl.textContent = trimWasteEl.value + '%';
+      updateSliderFill(throwWasteEl);
+      updateSliderFill(trimWasteEl);
+      syncHandleUI();
+      if (includeHandleEl.checked && !handleWeightEl.value) {
+        applyHandleStyle(handleStyleEl.value);
+      }
+      recalc();
+    })();
+  </script>
+
+  <style>
+    .tool-page {
+      position: relative;
+      z-index: 1;
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+
+    .tool-header { text-align: center; margin-bottom: 2rem; }
+    .tool-header .rule { margin-bottom: 1.5rem; }
+
+    .tool-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: clamp(2.2rem, 6vw, 3rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-tan-light);
+      line-height: 1;
+    }
+
+    .tool-header .sub {
+      margin-top: 0.5rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+    }
+
+    .mode-hint {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+      padding: 0 0.25rem;
+    }
+
+    .mode-hint em {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--color-tan-light);
+    }
+
+    /* --- Inputs card --- */
+    .inputs {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      margin-bottom: 1.25rem;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .input-row[hidden] { display: none; }
+    .input-row:first-child { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+    .input-row:last-child { border-bottom: none; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; }
+
+    .input-label {
+      width: 110px;
+      padding: 1.1rem 1.25rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+    }
+
+    .input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      padding-right: 1.25rem;
+      min-width: 0;
+    }
+
+    .input-field {
+      flex: 1;
+      padding: 1.1rem 0;
+      border: none;
+      background: none;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+      color: var(--color-cream);
+      text-align: right;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .input-field::placeholder { color: var(--color-muted); opacity: 0.6; font-style: italic; }
+    .input-field:focus { outline: none; }
+
+    .input-with-unit { gap: 0.5rem; }
+
+    .unit-echo {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      min-width: 1.5rem;
+      text-align: right;
+    }
+
+    .unit-toggle { justify-content: flex-end; padding-right: 1.25rem; gap: 0.35rem; }
+
+    .unit-btn {
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      color: var(--color-muted);
+      font-family: 'Jost', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.45rem 0.9rem;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .unit-btn.active {
+      color: var(--color-cream);
+      border-color: var(--color-gold);
+      background: rgba(184, 144, 42, 0.12);
+    }
+
+    /* range sliders */
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.9rem 0;
+    }
+
+    .range-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--color-border);
+      border-radius: 2px;
+      outline: none;
+      min-width: 0;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .range-slider:focus { outline: none; }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--color-tan-light);
+      border: 1px solid var(--color-gold);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      transition: transform 0.1s;
+    }
+
+    .range-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--color-tan-light);
+      border: 1px solid var(--color-gold);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+
+    .range-slider::-webkit-slider-thumb:hover,
+    .range-slider:focus-visible::-webkit-slider-thumb {
+      transform: scale(1.08);
+    }
+
+    .slider-value {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      color: var(--color-tan-light);
+      min-width: 3rem;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* checkbox styling */
+    .checkbox-wrap {
+      align-items: center;
+      padding-right: 1.25rem;
+      padding-left: 0;
+    }
+
+    .checkbox-inline {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      padding: 0.9rem 0;
+    }
+
+    .checkbox-inline input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 1.1rem;
+      height: 1.1rem;
+      border: 1px solid var(--color-border);
+      border-radius: 3px;
+      background: rgba(28, 20, 16, 0.6);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .checkbox-inline input[type="checkbox"]:checked {
+      border-color: var(--color-gold);
+      background: rgba(184, 144, 42, 0.18);
+    }
+
+    .checkbox-inline input[type="checkbox"]:checked::after {
+      content: '✓';
+      color: var(--color-gold);
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+
+    .checkbox-inline input[type="checkbox"]:focus-visible {
+      outline: 1px solid var(--color-gold);
+      outline-offset: 2px;
+    }
+
+    .checkbox-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      color: var(--color-cream);
+    }
+
+    /* --- Select field --- */
+    .select-field {
+      flex: 1;
+      padding: 1.1rem 1.5rem 1.1rem 0;
+      border: none;
+      background: transparent;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: var(--color-cream);
+      text-align: right;
+      text-align-last: right;
+      width: 100%;
+      cursor: pointer;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23c9a97a' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.25rem center;
+    }
+
+    .select-field:focus { outline: none; }
+
+    .select-field option, .select-field optgroup {
+      background-color: var(--color-surface);
+      color: var(--color-cream);
+      font-family: 'Jost', sans-serif;
+    }
+
+    /* --- Clay combobox --- */
+    .input-wrap.combobox { position: relative; }
+    .combobox-input { cursor: text; padding-right: 1.75rem; }
+
+    .combobox-input::placeholder {
+      color: var(--color-muted);
+      opacity: 0.55;
+      font-style: italic;
+      font-size: 1.1rem;
+    }
+
+    .combobox-chevron {
+      position: absolute;
+      right: 0; top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--color-tan);
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .combobox-panel {
+      position: absolute;
+      top: calc(100% + 0.5rem);
+      left: 0; right: 0;
+      z-index: 10;
+      max-height: 320px;
+      overflow-y: auto;
+      background: #1a110b;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.6), 0 2px 6px -2px rgba(0, 0, 0, 0.4);
+      padding: 0.4rem 0;
+    }
+
+    .combobox-panel[hidden] { display: none; }
+
+    .combo-group-label {
+      padding: 0.65rem 1rem 0.35rem;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+      opacity: 0.75;
+    }
+
+    .combo-item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.55rem 1rem;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .combo-item.is-active { background: var(--color-surface-2); }
+    .combo-item.is-selected .combo-item-name { color: var(--color-gold); }
+    .combo-item.is-selected::before {
+      content: '•';
+      color: var(--color-gold);
+      margin-right: 0.4rem;
+      line-height: 1;
+    }
+    .combo-item.has-note .combo-item-name::after {
+      content: ' \26A0';
+      color: #d4a952;
+      font-size: 0.7em;
+      margin-left: 0.25rem;
+    }
+
+    .combo-item-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      color: var(--color-cream);
+    }
+
+    .combo-item-pct {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--color-tan);
+      white-space: nowrap;
+    }
+
+    .combo-empty {
+      padding: 1rem;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--color-muted);
+    }
+
+    /* --- Clay warning banner --- */
+    .clay-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      padding: 0.85rem 1.1rem;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(180deg, rgba(184, 144, 42, 0.14), rgba(176, 74, 46, 0.08));
+      border: 1px solid rgba(184, 144, 42, 0.45);
+      border-radius: 12px;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      line-height: 1.45;
+      color: #e6c98a;
+    }
+
+    .clay-warning[hidden] { display: none; }
+
+    .clay-warning .warn-icon {
+      color: #d4a952;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      flex-shrink: 0;
+    }
+
+    /* --- Result card --- */
+    .result {
+      background: linear-gradient(160deg, #120c08 0%, #1f150e 100%);
+      border: 1px solid var(--color-border);
+      color: var(--color-cream);
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(184, 144, 42, 0.18), transparent 50%),
+        radial-gradient(circle at 85% 90%, rgba(176, 74, 46, 0.10), transparent 55%);
+      pointer-events: none;
+    }
+
+    .result > * { position: relative; }
+
+    .result-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .result-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      line-height: 1.25;
+      color: var(--color-tan-light);
+      word-break: break-word;
+    }
+
+    .result-sub {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: var(--color-muted);
+      margin-top: 0.75rem;
+      min-height: 1em;
+    }
+
+    .result-breakdown {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--color-border);
+      text-align: left;
+    }
+
+    .result-breakdown[hidden] { display: none; }
+
+    .result-breakdown dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 0.4rem 1.25rem;
+    }
+
+    .result-breakdown dt {
+      font-family: 'Jost', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+      padding-top: 0.15rem;
+    }
+
+    .result-breakdown dd {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      color: var(--color-cream);
+      line-height: 1.4;
+    }
+
+    /* --- Notes --- */
+    .notes { border-top: 1px solid var(--color-border); padding-top: 2rem; }
+
+    .notes h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 1rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--color-tan);
+      margin-bottom: 1rem;
+    }
+
+    .notes ul { list-style: none; display: grid; gap: 0.8rem; }
+
+    .notes li {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--color-cream);
+      opacity: 0.7;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+
+    .notes li::before {
+      content: '\2022';
+      position: absolute;
+      left: 0;
+      color: var(--color-gold);
+    }
+
+    .notes strong { color: var(--color-tan-light); font-weight: 500; }
+    .notes em {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      color: var(--color-tan-light);
+    }
+  </style>
+</Layout>

@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import CoffeeTip from '../../components/CoffeeTip.astro';
 
 const tools = [
   {
@@ -7,6 +8,20 @@ const tools = [
     name: 'Shrinkage Calculator',
     description:
       'Workshop calc for dimensional shrinkage — find the final size after shrinkage, or reverse the math to oversize a piece that will shrink to a target.',
+    available: true,
+  },
+  {
+    href: '/tools/fluid-volume/',
+    name: 'Fluid Volume Calculator',
+    description:
+      'Design a vessel for a target liquid capacity, or predict what a thrown piece will hold — accounting for clay body shrinkage.',
+    available: true,
+  },
+  {
+    href: '/tools/throwing-weight/',
+    name: 'Throwing Weight Guide',
+    description:
+      'Pick a clay body and enter your target finished dimensions — get the wedged-up weight you need, with optional handle allowance.',
     available: true,
   },
 ];
@@ -51,6 +66,8 @@ const tools = [
         </li>
       ))}
     </ul>
+
+    <CoffeeTip />
   </main>
 
   <footer class="footer">

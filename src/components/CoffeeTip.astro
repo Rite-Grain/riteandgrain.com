@@ -1,0 +1,90 @@
+---
+const HREF = 'https://buymeacoffee.com/4dvu1r9nsh';
+---
+
+<aside class="coffee-tip">
+  <div class="coffee-copy">
+    <p class="coffee-lede">Find this helpful?</p>
+    <a class="coffee-cta" href={HREF} target="_blank" rel="noopener noreferrer">
+      Buy me a coffee &rarr;
+    </a>
+  </div>
+  <a class="coffee-qr" href={HREF} target="_blank" rel="noopener noreferrer" aria-label="Buy me a coffee (scan QR code)">
+    <img src="/coffee-qr.svg" alt="" width="96" height="96" loading="lazy" />
+  </a>
+</aside>
+
+<style>
+  .coffee-tip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1.1rem 1.25rem;
+    margin-top: 2.5rem;
+    background: linear-gradient(180deg, rgba(58, 44, 32, 0.4), rgba(28, 20, 16, 0.6));
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+  }
+
+  .coffee-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .coffee-lede {
+    font-family: 'Jost', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .coffee-cta {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--color-tan-light);
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.1rem;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .coffee-cta:hover {
+    color: var(--color-gold);
+    border-bottom-color: var(--color-gold);
+  }
+
+  .coffee-qr {
+    display: block;
+    flex-shrink: 0;
+    padding: 0.35rem;
+    background: #1c1410;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    line-height: 0;
+  }
+
+  .coffee-qr:hover {
+    border-color: var(--color-gold);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px -10px rgba(184, 144, 42, 0.35);
+  }
+
+  .coffee-qr img {
+    display: block;
+    width: 80px;
+    height: 80px;
+  }
+
+  @media (max-width: 420px) {
+    .coffee-tip {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+  }
+</style>

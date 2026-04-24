@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:www.georgies.com)",
-      "WebFetch(domain:www.lagunaclay.com)"
+      "WebFetch(domain:www.lagunaclay.com)",
+      "Bash(gh api *)",
+      "Bash(gh run *)",
+      "Read(//tmp/**)",
+      "Bash(curl -sH \"Cache-Control: no-cache\" \"https://riteandgrain.com/tools/shrinkage/?bust=$\\(date +%s\\)\" -o /tmp/live2.html)"
     ]
   }
 }
