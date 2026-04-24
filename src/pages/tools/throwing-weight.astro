@@ -6,7 +6,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
 
 <Layout
   title="Throwing Weight Guide — Rite & Grain"
-  description="Pick a clay body and enter your target finished dimensions — get the wedged-up weight you need, with optional handle allowance."
+  description="Pick a form, enter your target finished dimensions, and get the wedged-up weight you need — with handle and lid allowances."
   path="/tools/throwing-weight/"
 >
   <nav class="site-nav">
@@ -22,10 +22,25 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
     </header>
 
     <p class="mode-hint">
-      Enter the <em>finished</em> dimensions you&rsquo;re aiming for &mdash; we&rsquo;ll tell you how much clay to wedge up, scaled for your body&rsquo;s shrinkage.
+      Pick a form and enter your <em>finished</em> dimensions &mdash; we&rsquo;ll compute the wedged-up weight, scaled for shrinkage, with optional handle and lid allowances.
     </p>
 
     <div class="inputs">
+      <!-- Form (always visible) -->
+      <div class="input-row">
+        <label class="input-label" for="form">Form</label>
+        <div class="input-wrap">
+          <select class="select-field" id="form" autocomplete="off">
+            <option value="mug" selected>Mug / Cup</option>
+            <option value="bowl">Bowl</option>
+            <option value="plate">Plate</option>
+            <option value="vase">Vase / Moon Jar</option>
+            <option value="jar">Jar</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Length Unit -->
       <div class="input-row unit-row">
         <label class="input-label">Length Unit</label>
         <div class="input-wrap unit-toggle" role="radiogroup" aria-label="Length unit">
@@ -34,6 +49,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
+      <!-- Cone -->
       <div class="input-row">
         <label class="input-label" for="cone">Cone</label>
         <div class="input-wrap">
@@ -45,6 +61,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
+      <!-- Clay Body -->
       <div class="input-row">
         <label class="input-label" for="clay">Clay Body</label>
         <div class="input-wrap combobox" id="clayCombobox">
@@ -65,7 +82,26 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
-      <div class="input-row">
+      <!-- Plate: Diameter -->
+      <div class="input-row" data-rowkey="plateD" hidden>
+        <label class="input-label" for="plateD">Diameter</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="plateD" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Plate: Thickness -->
+      <div class="input-row" data-rowkey="plateThick" hidden>
+        <label class="input-label" for="plateThick">Thickness</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="plateThick" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Height (mug/bowl/vase/jar) -->
+      <div class="input-row" data-rowkey="height">
         <label class="input-label" for="height">Height</label>
         <div class="input-wrap input-with-unit">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="height" placeholder="&mdash;" />
@@ -73,23 +109,53 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
-      <div class="input-row">
-        <label class="input-label" for="mouthD">Top Ø</label>
+      <!-- Top / Rim / Mouth Ø (mug, bowl, vase) -->
+      <div class="input-row" data-rowkey="topD">
+        <label class="input-label" for="mouthD" id="topDLabel">Top Ø</label>
         <div class="input-wrap input-with-unit">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="mouthD" placeholder="&mdash;" />
           <span class="unit-echo" data-len-unit>in</span>
         </div>
       </div>
 
-      <div class="input-row">
-        <label class="input-label" for="baseD">Base Ø</label>
+      <!-- Chamber Ø (vase) -->
+      <div class="input-row" data-rowkey="chamberD" hidden>
+        <label class="input-label" for="chamberD">Chamber Ø</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="chamberD" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Chamber Height (vase) -->
+      <div class="input-row" data-rowkey="chamberH" hidden>
+        <label class="input-label" for="chamberH">Chamber Ht</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="chamberH" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Base / Foot Ø (mug, bowl, vase) -->
+      <div class="input-row" data-rowkey="baseD">
+        <label class="input-label" for="baseD" id="baseDLabel">Base Ø</label>
         <div class="input-wrap input-with-unit">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="baseD" placeholder="&mdash;" />
           <span class="unit-echo" data-len-unit>in</span>
         </div>
       </div>
 
-      <div class="input-row">
+      <!-- Jar Diameter -->
+      <div class="input-row" data-rowkey="jarD" hidden>
+        <label class="input-label" for="jarD">Diameter</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="jarD" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Walls -->
+      <div class="input-row" data-rowkey="wall">
         <label class="input-label" for="wall">Walls</label>
         <div class="input-wrap input-with-unit">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="wall" placeholder="&mdash;" />
@@ -97,7 +163,8 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
-      <div class="input-row">
+      <!-- Base Thick -->
+      <div class="input-row" data-rowkey="baseT">
         <label class="input-label" for="baseT">Base Thick</label>
         <div class="input-wrap input-with-unit">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="baseT" placeholder="&mdash;" />
@@ -105,6 +172,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
+      <!-- Throw Waste -->
       <div class="input-row">
         <label class="input-label" for="throwWaste">Throw Waste</label>
         <div class="input-wrap slider-wrap">
@@ -113,6 +181,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
+      <!-- Trim Waste -->
       <div class="input-row">
         <label class="input-label" for="trimWaste">Trim Waste</label>
         <div class="input-wrap slider-wrap">
@@ -121,7 +190,8 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
-      <div class="input-row">
+      <!-- Include Handle (not plate) -->
+      <div class="input-row" id="includeHandleRow">
         <label class="input-label" for="includeHandle">Handle</label>
         <div class="input-wrap checkbox-wrap">
           <label class="checkbox-inline">
@@ -131,24 +201,64 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         </div>
       </div>
 
-      <div class="input-row handle-only" id="handleStyleRow" hidden>
+      <!-- Handle Style (when include handle checked) -->
+      <div class="input-row" id="handleStyleRow" hidden>
         <label class="input-label" for="handleStyle">Style</label>
         <div class="input-wrap">
           <select class="select-field" id="handleStyle" autocomplete="off">
-            <option value="slab" selected>Slab — ¼″ × 1″ × 7″ (~53 g)</option>
             <option value="pulled-s">Pulled, small — ~25 g</option>
-            <option value="pulled-m">Pulled, medium — ~45 g</option>
+            <option value="pulled-m" selected>Pulled, medium — ~45 g</option>
             <option value="pulled-l">Pulled, large — ~75 g</option>
             <option value="molded">Molded — ~50 g</option>
+            <option value="slab">Slab — ¼″ × 1″ × 7″ (~53 g)</option>
             <option value="custom">Custom</option>
           </select>
         </div>
       </div>
 
-      <div class="input-row handle-only" id="handleWeightRow" hidden>
+      <!-- Handle Weight -->
+      <div class="input-row" id="handleWeightRow" hidden>
         <label class="input-label" for="handleWeight">Weight</label>
         <div class="input-wrap input-with-unit">
           <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="handleWeight" placeholder="&mdash;" />
+          <span class="unit-echo">g</span>
+        </div>
+      </div>
+
+      <!-- Include Lid (not plate) -->
+      <div class="input-row" id="includeLidRow">
+        <label class="input-label" for="includeLid">Lid</label>
+        <div class="input-wrap checkbox-wrap">
+          <label class="checkbox-inline">
+            <input type="checkbox" id="includeLid" />
+            <span class="checkbox-label">Include lid allowance</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Lid Diameter -->
+      <div class="input-row" id="lidDRow" hidden>
+        <label class="input-label" for="lidD">Lid Ø</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="lidD" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Lid Thickness -->
+      <div class="input-row" id="lidThickRow" hidden>
+        <label class="input-label" for="lidThick">Lid Thick</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="lidThick" placeholder="&mdash;" />
+          <span class="unit-echo" data-len-unit>in</span>
+        </div>
+      </div>
+
+      <!-- Knob Weight (optional) -->
+      <div class="input-row" id="knobWeightRow" hidden>
+        <label class="input-label" for="knobWeight">Knob</label>
+        <div class="input-wrap input-with-unit">
+          <input class="input-field" type="text" inputmode="decimal" autocomplete="off" id="knobWeight" placeholder="&mdash;" />
           <span class="unit-echo">g</span>
         </div>
       </div>
@@ -169,11 +279,9 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
     <aside class="notes">
       <h3>Notes</h3>
       <ul>
-        <li>Vessel is modeled as a <strong>frustum</strong> (tapered cylinder). Set Top Ø = Base Ø for a straight-walled cylinder.</li>
-        <li><strong>Clay weight</strong> assumes wet-clay density of ~1.85 g/cm³. Actual wedge weight varies by body and moisture.</li>
-        <li>Math is pure clay mass of the finished form &mdash; it does <em>not</em> add a throwing-waste allowance. Most potters add 10–20% to account for trim loss.</li>
-        <li>The slab handle preset uses Christopher&rsquo;s method: a ¼″ × 1″ × 7″ strip.</li>
-        <li><strong>Fractions work:</strong> type <em>1/8</em>, <em>3/4</em>, or even <em>1 1/2</em> &mdash; or use decimals like <em>0.125</em>.</li>
+        <li><strong>Clay weight</strong> uses ~1.85 g/cm³ wet-clay density; actual varies by body and moisture.</li>
+        <li><strong>Slab handle</strong> preset = ¼″ × 1″ × 7″ strip (~53 g wet).</li>
+        <li><strong>Fractions work:</strong> type <em>1/8</em>, <em>3/4</em>, or <em>1 1/2</em> &mdash; or decimals like <em>0.125</em>.</li>
       </ul>
     </aside>
 
@@ -195,14 +303,33 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       const STORAGE_KEY  = 'rag-throwing-v1';
 
       const HANDLE_PRESETS = {
-        'slab':     53,
         'pulled-s': 25,
         'pulled-m': 45,
         'pulled-l': 75,
         'molded':   50,
+        'slab':     53,
+      };
+
+      const FORM_CONFIG = {
+        'mug':   { rowKeys: ['height', 'topD', 'baseD', 'wall', 'baseT'],
+                   labels: { topD: 'Top Ø',   baseD: 'Base Ø' },
+                   allowHandle: true,  allowLid: true,  geom: 'frustum' },
+        'bowl':  { rowKeys: ['height', 'topD', 'baseD', 'wall', 'baseT'],
+                   labels: { topD: 'Rim Ø',   baseD: 'Foot Ø' },
+                   allowHandle: true,  allowLid: true,  geom: 'frustum' },
+        'plate': { rowKeys: ['plateD', 'plateThick'],
+                   labels: {},
+                   allowHandle: false, allowLid: false, geom: 'plate' },
+        'vase':  { rowKeys: ['height', 'topD', 'chamberD', 'chamberH', 'baseD', 'wall', 'baseT'],
+                   labels: { topD: 'Mouth Ø', baseD: 'Foot Ø' },
+                   allowHandle: true,  allowLid: true,  geom: 'two-frustum' },
+        'jar':   { rowKeys: ['height', 'jarD', 'wall', 'baseT'],
+                   labels: {},
+                   allowHandle: true,  allowLid: true,  geom: 'cylinder' },
       };
 
       // -------- elements --------
+      const formEl        = document.getElementById('form');
       const unitBtns      = document.querySelectorAll('.unit-btn');
       const unitEchoes    = document.querySelectorAll('[data-len-unit]');
       const coneEl        = document.getElementById('cone');
@@ -211,20 +338,43 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       const clayPanelEl   = document.getElementById('clayPanel');
       const warnEl        = document.getElementById('clayWarning');
       const warnTextEl    = document.getElementById('clayWarningText');
+
+      const plateDEl      = document.getElementById('plateD');
+      const plateThickEl  = document.getElementById('plateThick');
+
       const heightEl      = document.getElementById('height');
       const mouthEl       = document.getElementById('mouthD');
+      const chamberDEl    = document.getElementById('chamberD');
+      const chamberHEl    = document.getElementById('chamberH');
       const baseEl        = document.getElementById('baseD');
+      const jarDEl        = document.getElementById('jarD');
       const wallEl        = document.getElementById('wall');
       const baseTEl       = document.getElementById('baseT');
-      const throwWasteEl = document.getElementById('throwWaste');
+
+      const topDLabel     = document.getElementById('topDLabel');
+      const baseDLabel    = document.getElementById('baseDLabel');
+
+      const throwWasteEl  = document.getElementById('throwWaste');
       const throwWasteValueEl = document.getElementById('throwWasteValue');
-      const trimWasteEl = document.getElementById('trimWaste');
+      const trimWasteEl   = document.getElementById('trimWaste');
       const trimWasteValueEl = document.getElementById('trimWasteValue');
-      const includeHandleEl = document.getElementById('includeHandle');
+
+      const includeHandleRow = document.getElementById('includeHandleRow');
+      const includeHandleEl  = document.getElementById('includeHandle');
       const handleStyleRow = document.getElementById('handleStyleRow');
       const handleWeightRow = document.getElementById('handleWeightRow');
-      const handleStyleEl = document.getElementById('handleStyle');
+      const handleStyleEl  = document.getElementById('handleStyle');
       const handleWeightEl = document.getElementById('handleWeight');
+
+      const includeLidRow  = document.getElementById('includeLidRow');
+      const includeLidEl   = document.getElementById('includeLid');
+      const lidDRow        = document.getElementById('lidDRow');
+      const lidThickRow    = document.getElementById('lidThickRow');
+      const knobWeightRow  = document.getElementById('knobWeightRow');
+      const lidDEl         = document.getElementById('lidD');
+      const lidThickEl     = document.getElementById('lidThick');
+      const knobWeightEl   = document.getElementById('knobWeight');
+
       const resultValueEl = document.getElementById('resultValue');
       const resultSubEl   = document.getElementById('resultSub');
       const resultBreakEl = document.getElementById('resultBreakdown');
@@ -269,6 +419,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         return parseFloat(n.toFixed(digits)).toString();
       }
 
+      function currentForm() { return formEl.value || 'mug'; }
       function currentCone() { return coneEl.value || '6'; }
       function coneLabel(c)  { return 'Cone ' + c; }
 
@@ -358,7 +509,6 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         const cone = currentCone();
         const filtered = filterBodies(query);
         comboItems = filtered;
-
         if (filtered.length === 0) {
           const hasQ = String(query || '').trim() !== '';
           const ratedCount = bodiesForCurrentCone().length;
@@ -369,7 +519,6 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
           clayPanelEl.innerHTML = '<div class="combo-empty">' + escapeHtml(msg) + '</div>';
           return;
         }
-
         const groupOrder = [];
         const groupItems = {};
         for (let i = 0; i < filtered.length; i++) {
@@ -377,7 +526,6 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
           if (!groupItems[b.group]) { groupItems[b.group] = []; groupOrder.push(b.group); }
           groupItems[b.group].push({ body: b, flatIdx: i });
         }
-
         let html = '';
         for (let g = 0; g < groupOrder.length; g++) {
           const group = groupOrder[g];
@@ -431,17 +579,14 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         if (val === null || isNaN(val)) return null;
         return lengthUnit === 'cm' ? val / CM_PER_IN : val;
       }
-
       function fromInches(inches) {
         if (inches === null || isNaN(inches)) return null;
         return lengthUnit === 'cm' ? inches * CM_PER_IN : inches;
       }
-
       function lenStr(inches) {
         const v = fromInches(inches);
         return fmt(v, lengthUnit === 'cm' ? 2 : 3) + ' ' + lengthUnit;
       }
-
       function weightStr(g) {
         if (g === null || isNaN(g)) return '—';
         const lb = g / G_PER_LB;
@@ -456,41 +601,183 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         return Math.PI * h / 3 * (R*R + R*r + r*r);
       }
 
-      function calc() {
+      function calcFrustum() {
         const height = toInches(parseNum(heightEl.value));
-        const mouthD = toInches(parseNum(mouthEl.value));
+        const topD   = toInches(parseNum(mouthEl.value));
         const baseD  = toInches(parseNum(baseEl.value));
         const wall   = toInches(parseNum(wallEl.value));
         const baseT  = toInches(parseNum(baseTEl.value));
 
         const clay = selectedClay();
-        if (height === null || mouthD === null || baseD === null || wall === null || baseT === null) return null;
+        if (height === null || topD === null || baseD === null || wall === null || baseT === null) return null;
         if (!clay) return { error: 'Choose a clay body above.' };
-        if (height <= 0 || mouthD <= 0 || baseD <= 0 || wall <= 0 || baseT <= 0) return { error: 'All values must be positive.' };
+        if (height <= 0 || topD <= 0 || baseD <= 0 || wall <= 0 || baseT <= 0) return { error: 'All values must be positive.' };
 
-        const intMouthR = (mouthD - 2 * wall) / 2;
-        const intBaseR  = (baseD  - 2 * wall) / 2;
-        if (intMouthR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
-
+        const intTopR = (topD - 2 * wall) / 2;
+        const intBaseR = (baseD - 2 * wall) / 2;
+        if (intTopR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
         const intHeight = height - baseT;
         if (intHeight <= 0) return { error: 'Base thickness meets or exceeds height.' };
 
-        // Final (entered) dimensions → final clay volume
-        const mouthR = mouthD / 2;
-        const baseR  = baseD  / 2;
-        const extVolFinal = frustumVolume(height, mouthR, baseR);
-        const intVolFinal = frustumVolume(intHeight, intMouthR, intBaseR);
-        const clayVolFinalIn3 = extVolFinal - intVolFinal;
+        const topR = topD / 2;
+        const baseR = baseD / 2;
+        const extVol = frustumVolume(height, topR, baseR);
+        const intVol = frustumVolume(intHeight, intTopR, intBaseR);
+        const clayVolFinalIn3 = extVol - intVol;
 
-        // Scale to thrown
         const s = clay.shrinkage / 100;
-        const throwFactor = 1 / (1 - s);
-        const throwFactor3 = throwFactor * throwFactor * throwFactor;
-        const clayVolThrownIn3 = clayVolFinalIn3 * throwFactor3;
-        const clayVolPieceCm3 = clayVolThrownIn3 * CM3_PER_IN3;
-        const bodyPieceG = clayVolPieceCm3 * CLAY_DENSITY_G_CM3;
+        const tf = 1 / (1 - s);
+        const clayVolWetIn3 = clayVolFinalIn3 * tf * tf * tf;
 
-        // Throwing + trimming waste — applied as compounding buffers on the body.
+        return {
+          clay, clayVolWetIn3, throwFactor: tf,
+          thrownHeight: height * tf,
+          thrownTopD: topD * tf,
+          thrownBaseD: baseD * tf,
+          thrownWall: wall * tf,
+          thrownBaseT: baseT * tf,
+        };
+      }
+
+      function calcCylinder() {
+        const height = toInches(parseNum(heightEl.value));
+        const d      = toInches(parseNum(jarDEl.value));
+        const wall   = toInches(parseNum(wallEl.value));
+        const baseT  = toInches(parseNum(baseTEl.value));
+
+        const clay = selectedClay();
+        if (height === null || d === null || wall === null || baseT === null) return null;
+        if (!clay) return { error: 'Choose a clay body above.' };
+        if (height <= 0 || d <= 0 || wall <= 0 || baseT <= 0) return { error: 'All values must be positive.' };
+
+        const R = d / 2;
+        const intR = R - wall;
+        if (intR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
+        const intHeight = height - baseT;
+        if (intHeight <= 0) return { error: 'Base thickness meets or exceeds height.' };
+
+        const extVol = Math.PI * R * R * height;
+        const intVol = Math.PI * intR * intR * intHeight;
+        const clayVolFinalIn3 = extVol - intVol;
+
+        const s = clay.shrinkage / 100;
+        const tf = 1 / (1 - s);
+        const clayVolWetIn3 = clayVolFinalIn3 * tf * tf * tf;
+
+        return {
+          clay, clayVolWetIn3, throwFactor: tf,
+          thrownHeight: height * tf,
+          thrownD: d * tf,
+          thrownWall: wall * tf,
+          thrownBaseT: baseT * tf,
+        };
+      }
+
+      function calcPlate() {
+        const d = toInches(parseNum(plateDEl.value));
+        const t = toInches(parseNum(plateThickEl.value));
+
+        const clay = selectedClay();
+        if (d === null || t === null) return null;
+        if (!clay) return { error: 'Choose a clay body above.' };
+        if (d <= 0 || t <= 0) return { error: 'All values must be positive.' };
+
+        const R = d / 2;
+        const clayVolFinalIn3 = Math.PI * R * R * t;
+
+        const s = clay.shrinkage / 100;
+        const tf = 1 / (1 - s);
+        const clayVolWetIn3 = clayVolFinalIn3 * tf * tf * tf;
+
+        return {
+          clay, clayVolWetIn3, throwFactor: tf,
+          thrownD: d * tf,
+          thrownThick: t * tf,
+        };
+      }
+
+      function calcTwoFrustum() {
+        const height   = toInches(parseNum(heightEl.value));
+        const mouthD   = toInches(parseNum(mouthEl.value));
+        const chamberD = toInches(parseNum(chamberDEl.value));
+        const chamberH = toInches(parseNum(chamberHEl.value));
+        const footD    = toInches(parseNum(baseEl.value));
+        const wall     = toInches(parseNum(wallEl.value));
+        const baseT    = toInches(parseNum(baseTEl.value));
+
+        const clay = selectedClay();
+        const vals = [height, mouthD, chamberD, chamberH, footD, wall, baseT];
+        if (vals.some(function (v) { return v === null; })) return null;
+        if (!clay) return { error: 'Choose a clay body above.' };
+        if (vals.some(function (v) { return v <= 0; })) return { error: 'All values must be positive.' };
+        if (chamberH >= height) return { error: 'Chamber height must be less than total height.' };
+        if (baseT >= chamberH) return { error: 'Base thickness exceeds chamber height.' };
+
+        const mouthR   = mouthD / 2;
+        const chamberR = chamberD / 2;
+        const footR    = footD / 2;
+        const intMouthR   = mouthR - wall;
+        const intChamberR = chamberR - wall;
+        const intFootR    = footR - wall;
+        if (intMouthR <= 0 || intChamberR <= 0 || intFootR <= 0) {
+          return { error: 'Walls leave no interior — check dimensions.' };
+        }
+
+        const upperH = height - chamberH;
+
+        // Exterior
+        const extVolLower = frustumVolume(chamberH, chamberR, footR);
+        const extVolUpper = frustumVolume(upperH, chamberR, mouthR);
+        const extVolTotal = extVolLower + extVolUpper;
+
+        // Interior: starts at z=baseT; interpolate outer radius there
+        const startFrac = baseT / chamberH;
+        const outerAtStart = footR + (chamberR - footR) * startFrac;
+        const intLowerBotR = outerAtStart - wall;
+        if (intLowerBotR <= 0) return { error: 'Walls leave no interior at the foot — check dimensions.' };
+        const intLowerH = chamberH - baseT;
+
+        const intVolLower = frustumVolume(intLowerH, intChamberR, intLowerBotR);
+        const intVolUpper = frustumVolume(upperH, intChamberR, intMouthR);
+        const intVolTotal = intVolLower + intVolUpper;
+
+        const clayVolFinalIn3 = extVolTotal - intVolTotal;
+
+        const s = clay.shrinkage / 100;
+        const tf = 1 / (1 - s);
+        const clayVolWetIn3 = clayVolFinalIn3 * tf * tf * tf;
+
+        return {
+          clay, clayVolWetIn3, throwFactor: tf,
+          thrownHeight: height * tf,
+          thrownMouthD: mouthD * tf,
+          thrownChamberD: chamberD * tf,
+          thrownChamberH: chamberH * tf,
+          thrownFootD: footD * tf,
+          thrownWall: wall * tf,
+          thrownBaseT: baseT * tf,
+        };
+      }
+
+      function calc() {
+        const form = currentForm();
+        const config = FORM_CONFIG[form];
+        let result;
+        if (config.geom === 'plate') result = calcPlate();
+        else if (config.geom === 'cylinder') result = calcCylinder();
+        else if (config.geom === 'two-frustum') result = calcTwoFrustum();
+        else result = calcFrustum();
+
+        if (!result || result.error) return result;
+
+        result.form = form;
+        attachWasteAndAccessories(result);
+        return result;
+      }
+
+      function attachWasteAndAccessories(r) {
+        const bodyPieceG = r.clayVolWetIn3 * CM3_PER_IN3 * CLAY_DENSITY_G_CM3;
+
         const throwPct = parseNum(throwWasteEl.value) || 0;
         const trimPct  = parseNum(trimWasteEl.value)  || 0;
         const throwAddG = bodyPieceG * (throwPct / 100);
@@ -498,49 +785,64 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         const trimAddG  = afterThrowG * (trimPct / 100);
         const bodyWeightG = afterThrowG + trimAddG;
 
-        // Handle allowance (already wet weight; no waste applied)
-        let handleWeightG = 0;
-        let handleStyle = null;
-        if (includeHandleEl.checked) {
+        // Handle
+        let handleWeightG = 0, handleStyle = null;
+        if (includeHandleEl.checked && FORM_CONFIG[r.form].allowHandle) {
           const w = parseNum(handleWeightEl.value);
           handleWeightG = (w !== null && w > 0) ? w : 0;
           handleStyle = handleStyleEl.value;
         }
 
-        const totalWeightG = bodyWeightG + handleWeightG;
-        const totalVolCm3 = (bodyWeightG + handleWeightG) / CLAY_DENSITY_G_CM3;
+        // Lid — disc model
+        let lidBodyG = 0, knobG = 0, lidD = null, lidT = null;
+        if (includeLidEl.checked && FORM_CONFIG[r.form].allowLid) {
+          lidD = toInches(parseNum(lidDEl.value));
+          lidT = toInches(parseNum(lidThickEl.value));
+          if (lidD !== null && lidT !== null && lidD > 0 && lidT > 0) {
+            const lidFinalIn3 = Math.PI * (lidD / 2) * (lidD / 2) * lidT;
+            const tf = r.throwFactor;
+            const lidWetIn3 = lidFinalIn3 * tf * tf * tf;
+            lidBodyG = lidWetIn3 * CM3_PER_IN3 * CLAY_DENSITY_G_CM3;
+          }
+          const k = parseNum(knobWeightEl.value);
+          knobG = (k !== null && k > 0) ? k : 0;
+        }
+
+        const lidTotalG = lidBodyG + knobG;
+        const totalWeightG = bodyWeightG + handleWeightG + lidTotalG;
+        const totalVolCm3 = totalWeightG / CLAY_DENSITY_G_CM3;
         const totalVolIn3 = totalVolCm3 / CM3_PER_IN3;
 
-        return {
-          clay: clay,
-          // dims (final, entered)
-          height: height, mouthD: mouthD, baseD: baseD, wall: wall, baseT: baseT,
-          // thrown dims
-          thrownHeight: height * throwFactor,
-          thrownMouthD: mouthD * throwFactor,
-          thrownBaseD:  baseD  * throwFactor,
-          thrownWall:   wall   * throwFactor,
-          thrownBaseT:  baseT  * throwFactor,
-          // volumes / weights
-          clayVolPieceIn3: clayVolThrownIn3,
-          clayVolPieceCm3: clayVolPieceCm3,
-          bodyPieceG: bodyPieceG,
-          throwPct: throwPct,
-          trimPct: trimPct,
-          throwAddG: throwAddG,
-          trimAddG: trimAddG,
-          bodyWeightG: bodyWeightG,
-          handleWeightG: handleWeightG,
-          handleStyle: handleStyle,
-          totalWeightG: totalWeightG,
-          totalVolCm3: totalVolCm3,
-          totalVolIn3: totalVolIn3,
-        };
+        r.bodyPieceG = bodyPieceG;
+        r.throwPct = throwPct;
+        r.trimPct = trimPct;
+        r.throwAddG = throwAddG;
+        r.trimAddG = trimAddG;
+        r.bodyWeightG = bodyWeightG;
+        r.handleWeightG = handleWeightG;
+        r.handleStyle = handleStyle;
+        r.lidBodyG = lidBodyG;
+        r.knobG = knobG;
+        r.lidTotalG = lidTotalG;
+        r.lidD = lidD;
+        r.lidT = lidT;
+        r.totalWeightG = totalWeightG;
+        r.totalVolCm3 = totalVolCm3;
+        r.totalVolIn3 = totalVolIn3;
+      }
+
+      function handleStyleLabel(v) {
+        return v === 'slab' ? 'slab'
+             : v === 'pulled-s' ? 'pulled, small'
+             : v === 'pulled-m' ? 'pulled, medium'
+             : v === 'pulled-l' ? 'pulled, large'
+             : v === 'molded'   ? 'molded'
+             : v === 'custom'   ? 'custom'
+             : v || '';
       }
 
       function renderResult(r) {
         updateClayWarning();
-
         if (!r) {
           resultValueEl.textContent = '—';
           resultSubEl.innerHTML = '&nbsp;';
@@ -555,118 +857,91 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         }
 
         resultValueEl.textContent = weightStr(r.totalWeightG);
-        resultSubEl.textContent =
-          r.clay.name + ' · ' + coneLabel(r.clay.cone) +
+        resultSubEl.textContent = r.clay.name + ' · ' + coneLabel(r.clay.cone) +
           ' · ' + r.clay.shrinkage.toFixed(2) + '% shrinkage';
 
+        let throwToParts = [];
+        if (r.form === 'plate') {
+          throwToParts.push('<dt>Throw to</dt><dd>' + lenStr(r.thrownD) + ' ⌀ · ' + lenStr(r.thrownThick) + ' thick</dd>');
+        } else if (r.form === 'jar') {
+          throwToParts.push('<dt>Throw to</dt><dd>' + lenStr(r.thrownHeight) + ' H · ' + lenStr(r.thrownD) + ' ⌀</dd>');
+          throwToParts.push('<dt>Thrown walls</dt><dd>' + lenStr(r.thrownWall) + ' · base ' + lenStr(r.thrownBaseT) + ' thick</dd>');
+        } else if (r.form === 'vase') {
+          throwToParts.push('<dt>Throw to</dt><dd>' + lenStr(r.thrownHeight) + ' H · ' +
+            lenStr(r.thrownMouthD) + ' ⌀ mouth · ' +
+            lenStr(r.thrownChamberD) + ' ⌀ chamber · ' +
+            lenStr(r.thrownFootD) + ' ⌀ foot</dd>');
+          throwToParts.push('<dt>Chamber at</dt><dd>' + lenStr(r.thrownChamberH) + ' from base</dd>');
+          throwToParts.push('<dt>Thrown walls</dt><dd>' + lenStr(r.thrownWall) + ' · base ' + lenStr(r.thrownBaseT) + ' thick</dd>');
+        } else {
+          const topLabel = r.form === 'bowl' ? 'rim' : 'top';
+          const baseLabel = r.form === 'bowl' ? 'foot' : 'base';
+          throwToParts.push('<dt>Throw to</dt><dd>' + lenStr(r.thrownHeight) + ' H · ' +
+            lenStr(r.thrownTopD) + ' ⌀ ' + topLabel + ' · ' +
+            lenStr(r.thrownBaseD) + ' ⌀ ' + baseLabel + '</dd>');
+          throwToParts.push('<dt>Thrown walls</dt><dd>' + lenStr(r.thrownWall) + ' · base ' + lenStr(r.thrownBaseT) + ' thick</dd>');
+        }
+
         const throwLine = r.throwPct > 0
-          ? '<dt>Throw waste (' + r.throwPct + '%)</dt>' +
-            '<dd>+' + fmt(r.throwAddG, 0) + ' g</dd>'
-          : '';
+          ? '<dt>Throw waste (' + r.throwPct + '%)</dt><dd>+' + fmt(r.throwAddG, 0) + ' g</dd>' : '';
         const trimLine = r.trimPct > 0
-          ? '<dt>Trim waste (' + r.trimPct + '%)</dt>' +
-            '<dd>+' + fmt(r.trimAddG, 0) + ' g</dd>'
-          : '';
+          ? '<dt>Trim waste (' + r.trimPct + '%)</dt><dd>+' + fmt(r.trimAddG, 0) + ' g</dd>' : '';
         const handleLine = r.handleWeightG > 0
-          ? '<dt>Handle (' + escapeHtml(handleStyleLabel(r.handleStyle)) + ')</dt>' +
-            '<dd>' + fmt(r.handleWeightG, 0) + ' g</dd>'
-          : '';
+          ? '<dt>Handle (' + escapeHtml(handleStyleLabel(r.handleStyle)) + ')</dt><dd>' + fmt(r.handleWeightG, 0) + ' g</dd>' : '';
+
+        const lidParts = [];
+        if (r.lidBodyG > 0) {
+          lidParts.push('<dt>Lid body</dt><dd>' + fmt(r.lidBodyG, 0) + ' g · ' +
+            lenStr(r.lidD) + ' ⌀ × ' + lenStr(r.lidT) + ' thick</dd>');
+        }
+        if (r.knobG > 0) {
+          lidParts.push('<dt>Knob</dt><dd>' + fmt(r.knobG, 0) + ' g</dd>');
+        }
 
         resultBreakEl.hidden = false;
         resultBreakEl.innerHTML =
           '<dl>' +
-            '<dt>Throw to</dt>' +
-            '<dd>' + lenStr(r.thrownHeight) + ' H · ' + lenStr(r.thrownMouthD) + ' ⌀ top · ' + lenStr(r.thrownBaseD) + ' ⌀ base</dd>' +
-            '<dt>Thrown walls</dt>' +
-            '<dd>' + lenStr(r.thrownWall) + ' · base ' + lenStr(r.thrownBaseT) + ' thick</dd>' +
-            '<dt>Body (piece mass)</dt>' +
-            '<dd>' + weightStr(r.bodyPieceG) + '</dd>' +
+            throwToParts.join('') +
+            '<dt>Body (piece mass)</dt><dd>' + weightStr(r.bodyPieceG) + '</dd>' +
             throwLine +
             trimLine +
             handleLine +
-            '<dt>Total</dt>' +
-            '<dd>' + weightStr(r.totalWeightG) + '</dd>' +
-            '<dt>Clay volume (wet)</dt>' +
-            '<dd>' + fmt(r.totalVolCm3, 0) + ' cm³ · ' + fmt(r.totalVolIn3, 2) + ' in³</dd>' +
+            lidParts.join('') +
+            '<dt>Total</dt><dd>' + weightStr(r.totalWeightG) + '</dd>' +
+            '<dt>Clay volume (wet)</dt><dd>' + fmt(r.totalVolCm3, 0) + ' cm³ · ' + fmt(r.totalVolIn3, 2) + ' in³</dd>' +
           '</dl>';
-      }
-
-      function handleStyleLabel(v) {
-        return v === 'slab' ? 'slab'
-             : v === 'pulled-s' ? 'pulled, small'
-             : v === 'pulled-m' ? 'pulled, medium'
-             : v === 'pulled-l' ? 'pulled, large'
-             : v === 'molded'   ? 'molded'
-             : v === 'custom'   ? 'custom'
-             : v || '';
       }
 
       function recalc() { renderResult(calc()); }
 
-      // -------- handle section --------
-      function syncHandleUI() {
-        const on = includeHandleEl.checked;
-        handleStyleRow.hidden = !on;
-        handleWeightRow.hidden = !on;
-      }
+      // -------- form UI --------
+      function updateFormUI() {
+        const form = currentForm();
+        const config = FORM_CONFIG[form];
 
-      function applyHandleStyle(style) {
-        // Autofill weight from preset if not custom.
-        if (style !== 'custom' && HANDLE_PRESETS[style] !== undefined) {
-          handleWeightEl.value = String(HANDLE_PRESETS[style]);
-        }
-      }
+        document.querySelectorAll('[data-rowkey]').forEach(function (el) {
+          const key = el.dataset.rowkey;
+          el.hidden = config.rowKeys.indexOf(key) === -1;
+        });
 
-      includeHandleEl.addEventListener('change', () => {
+        if (config.labels.topD && topDLabel) topDLabel.textContent = config.labels.topD;
+        else if (topDLabel) topDLabel.textContent = 'Top Ø';
+        if (config.labels.baseD && baseDLabel) baseDLabel.textContent = config.labels.baseD;
+        else if (baseDLabel) baseDLabel.textContent = 'Base Ø';
+
+        includeHandleRow.hidden = !config.allowHandle;
+        includeLidRow.hidden = !config.allowLid;
+        if (!config.allowHandle) includeHandleEl.checked = false;
+        if (!config.allowLid) includeLidEl.checked = false;
         syncHandleUI();
-        if (includeHandleEl.checked && !handleWeightEl.value) {
-          applyHandleStyle(handleStyleEl.value);
-        }
-        recalc();
-        saveSettings();
-      });
-
-      handleStyleEl.addEventListener('change', () => {
-        applyHandleStyle(handleStyleEl.value);
-        recalc();
-        saveSettings();
-      });
-
-      handleWeightEl.addEventListener('input', () => {
-        // Typing in the weight field flips the style to "custom" so subsequent
-        // style changes don't stomp the user's value unexpectedly.
-        if (handleStyleEl.value !== 'custom') handleStyleEl.value = 'custom';
-        recalc();
-        scheduleSave();
-      });
-
-      // -------- unit toggle --------
-      function setLengthUnit(u) {
-        if (u !== 'in' && u !== 'cm') return;
-        if (u === lengthUnit) return;
-        const prev = lengthUnit;
-        lengthUnit = u;
-
-        const factor = (prev === 'in' && u === 'cm') ? CM_PER_IN
-                     : (prev === 'cm' && u === 'in') ? (1 / CM_PER_IN)
-                     : 1;
-        [heightEl, mouthEl, baseEl, wallEl, baseTEl].forEach(el => {
-          const n = parseNum(el.value);
-          if (n !== null) el.value = fmt(n * factor, u === 'cm' ? 2 : 3);
-        });
-
-        unitBtns.forEach(b => {
-          const active = b.dataset.unit === u;
-          b.classList.toggle('active', active);
-          b.setAttribute('aria-checked', active ? 'true' : 'false');
-        });
-        unitEchoes.forEach(el => { el.textContent = u; });
-
-        recalc();
-        saveSettings();
+        syncLidUI();
       }
 
-      unitBtns.forEach(b => b.addEventListener('click', () => setLengthUnit(b.dataset.unit)));
+      formEl.addEventListener('change', function () {
+        updateFormUI();
+        recalc();
+        saveSettings();
+      });
 
       // -------- waste sliders --------
       function updateSliderFill(el) {
@@ -678,28 +953,105 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
           'linear-gradient(to right, var(--color-gold) 0%, var(--color-gold) ' + pct + '%, ' +
           'var(--color-border) ' + pct + '%, var(--color-border) 100%)';
       }
-
       function wireWasteSlider(sliderEl, valueEl) {
-        const sync = () => {
+        const sync = function () {
           valueEl.textContent = sliderEl.value + '%';
           updateSliderFill(sliderEl);
         };
-        sliderEl.addEventListener('input', () => {
-          sync();
-          recalc();
-          scheduleSave();
-        });
+        sliderEl.addEventListener('input', function () { sync(); recalc(); scheduleSave(); });
         sync();
       }
       wireWasteSlider(throwWasteEl, throwWasteValueEl);
       wireWasteSlider(trimWasteEl, trimWasteValueEl);
 
-      // -------- input listeners --------
-      [heightEl, mouthEl, baseEl, wallEl, baseTEl].forEach(el => {
-        el.addEventListener('input', () => { recalc(); scheduleSave(); });
+      // -------- handle section --------
+      function syncHandleUI() {
+        const form = currentForm();
+        const allow = FORM_CONFIG[form].allowHandle;
+        const on = allow && includeHandleEl.checked;
+        handleStyleRow.hidden = !on;
+        handleWeightRow.hidden = !on;
+      }
+
+      function applyHandleStyle(style) {
+        if (style !== 'custom' && HANDLE_PRESETS[style] !== undefined) {
+          handleWeightEl.value = String(HANDLE_PRESETS[style]);
+        }
+      }
+
+      includeHandleEl.addEventListener('change', function () {
+        syncHandleUI();
+        if (includeHandleEl.checked && !handleWeightEl.value) {
+          applyHandleStyle(handleStyleEl.value);
+        }
+        recalc();
+        saveSettings();
       });
 
-      coneEl.addEventListener('change', () => {
+      handleStyleEl.addEventListener('change', function () {
+        applyHandleStyle(handleStyleEl.value);
+        recalc();
+        saveSettings();
+      });
+
+      handleWeightEl.addEventListener('input', function () {
+        if (handleStyleEl.value !== 'custom') handleStyleEl.value = 'custom';
+        recalc();
+        scheduleSave();
+      });
+
+      // -------- lid section --------
+      function syncLidUI() {
+        const form = currentForm();
+        const allow = FORM_CONFIG[form].allowLid;
+        const on = allow && includeLidEl.checked;
+        lidDRow.hidden = !on;
+        lidThickRow.hidden = !on;
+        knobWeightRow.hidden = !on;
+      }
+
+      includeLidEl.addEventListener('change', function () {
+        syncLidUI();
+        recalc();
+        saveSettings();
+      });
+
+      [lidDEl, lidThickEl, knobWeightEl].forEach(function (el) {
+        el.addEventListener('input', function () { recalc(); scheduleSave(); });
+      });
+
+      // -------- unit toggle --------
+      function setLengthUnit(u) {
+        if (u !== 'in' && u !== 'cm') return;
+        if (u === lengthUnit) return;
+        const prev = lengthUnit;
+        lengthUnit = u;
+        const factor = (prev === 'in' && u === 'cm') ? CM_PER_IN
+                     : (prev === 'cm' && u === 'in') ? (1 / CM_PER_IN)
+                     : 1;
+        [heightEl, mouthEl, chamberDEl, chamberHEl, baseEl, jarDEl, wallEl, baseTEl, plateDEl, plateThickEl, lidDEl, lidThickEl].forEach(function (el) {
+          const n = parseNum(el.value);
+          if (n !== null) el.value = fmt(n * factor, u === 'cm' ? 2 : 3);
+        });
+        unitBtns.forEach(function (b) {
+          const active = b.dataset.unit === u;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        unitEchoes.forEach(function (el) { el.textContent = u; });
+        recalc();
+        saveSettings();
+      }
+      unitBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setLengthUnit(b.dataset.unit); });
+      });
+
+      // -------- dimension inputs --------
+      [heightEl, mouthEl, chamberDEl, chamberHEl, baseEl, jarDEl, wallEl, baseTEl, plateDEl, plateThickEl].forEach(function (el) {
+        el.addEventListener('input', function () { recalc(); scheduleSave(); });
+      });
+
+      coneEl.addEventListener('change', function () {
         refreshClaySelection();
         if (comboOpen) { comboHighlight = -1; renderComboPanel(clayEl.value); }
         recalc();
@@ -707,14 +1059,13 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       });
 
       // -------- clay combobox wiring --------
-      clayEl.addEventListener('focus', () => {
+      clayEl.addEventListener('focus', function () {
         if (selectedClayId) clayEl.value = '';
         comboHighlight = -1;
         openCombobox();
         clayEl.select();
       });
-
-      clayEl.addEventListener('input', () => {
+      clayEl.addEventListener('input', function () {
         if (selectedClayId) { selectedClayId = ''; clayEl.removeAttribute('data-clay-id'); }
         comboHighlight = -1;
         openCombobox();
@@ -722,8 +1073,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         recalc();
         scheduleSave();
       });
-
-      clayEl.addEventListener('keydown', (e) => {
+      clayEl.addEventListener('keydown', function (e) {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
           if (!comboOpen) openCombobox();
@@ -755,8 +1105,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
           }
         }
       });
-
-      clayEl.addEventListener('blur', () => {
+      clayEl.addEventListener('blur', function () {
         if (selectedClayId) {
           const body = getBodyById(selectedClayId);
           if (body) clayEl.value = canonicalDisplay(body);
@@ -767,16 +1116,14 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         recalc();
         saveSettings();
       });
-
-      clayPanelEl.addEventListener('mousedown', (e) => {
+      clayPanelEl.addEventListener('mousedown', function (e) {
         const item = e.target.closest && e.target.closest('.combo-item');
         if (!item) return;
         e.preventDefault();
         const id = item.getAttribute('data-id');
         if (id) commitSelection(id);
       });
-
-      document.addEventListener('mousedown', (e) => {
+      document.addEventListener('mousedown', function (e) {
         if (!comboOpen) return;
         if (clayComboboxEl.contains(e.target)) return;
         closeCombobox();
@@ -791,12 +1138,18 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       function saveSettings() {
         try {
           localStorage.setItem(STORAGE_KEY + ':settings', JSON.stringify({
+            form: formEl.value,
             lengthUnit: lengthUnit,
             cone: coneEl.value,
             lastClay: selectedClayId,
             height: heightEl.value,
             mouthD: mouthEl.value,
+            chamberD: chamberDEl.value,
+            chamberH: chamberHEl.value,
             baseD: baseEl.value,
+            jarD: jarDEl.value,
+            plateD: plateDEl.value,
+            plateThick: plateThickEl.value,
             wall: wallEl.value,
             baseT: baseTEl.value,
             throwWaste: throwWasteEl.value,
@@ -804,6 +1157,10 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
             includeHandle: includeHandleEl.checked,
             handleStyle: handleStyleEl.value,
             handleWeight: handleWeightEl.value,
+            includeLid: includeLidEl.checked,
+            lidD: lidDEl.value,
+            lidThick: lidThickEl.value,
+            knobWeight: knobWeightEl.value,
           }));
         } catch (e) { /* ignore */ }
       }
@@ -813,42 +1170,58 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
           const raw = localStorage.getItem(STORAGE_KEY + ':settings');
           if (!raw) return;
           const d = JSON.parse(raw);
+
+          if (d.form) {
+            const opt = formEl.querySelector('option[value="' + String(d.form).replace(/"/g, '\\"') + '"]');
+            if (opt) formEl.value = d.form;
+          }
           if (d.lengthUnit === 'in' || d.lengthUnit === 'cm') lengthUnit = d.lengthUnit;
           if (d.cone) {
             const opt = coneEl.querySelector('option[value="' + String(d.cone).replace(/"/g, '\\"') + '"]');
             if (opt) coneEl.value = d.cone;
           }
           if (d.height !== undefined) heightEl.value = d.height;
-          if (d.mouthD !== undefined) mouthEl.value  = d.mouthD;
-          if (d.baseD  !== undefined) baseEl.value   = d.baseD;
-          if (d.wall   !== undefined) wallEl.value   = d.wall;
-          if (d.baseT  !== undefined) baseTEl.value  = d.baseT;
+          if (d.mouthD !== undefined) mouthEl.value = d.mouthD;
+          if (d.chamberD !== undefined) chamberDEl.value = d.chamberD;
+          if (d.chamberH !== undefined) chamberHEl.value = d.chamberH;
+          if (d.baseD  !== undefined) baseEl.value = d.baseD;
+          if (d.jarD   !== undefined) jarDEl.value = d.jarD;
+          if (d.plateD !== undefined) plateDEl.value = d.plateD;
+          if (d.plateThick !== undefined) plateThickEl.value = d.plateThick;
+          if (d.wall   !== undefined) wallEl.value = d.wall;
+          if (d.baseT  !== undefined) baseTEl.value = d.baseT;
           if (d.throwWaste !== undefined) throwWasteEl.value = d.throwWaste;
           if (d.trimWaste  !== undefined) trimWasteEl.value  = d.trimWaste;
+
           if (d.includeHandle) includeHandleEl.checked = true;
           if (d.handleStyle) {
             const opt = handleStyleEl.querySelector('option[value="' + String(d.handleStyle).replace(/"/g, '\\"') + '"]');
             if (opt) handleStyleEl.value = d.handleStyle;
           }
           if (d.handleWeight !== undefined) handleWeightEl.value = d.handleWeight;
+
+          if (d.includeLid) includeLidEl.checked = true;
+          if (d.lidD !== undefined) lidDEl.value = d.lidD;
+          if (d.lidThick !== undefined) lidThickEl.value = d.lidThick;
+          if (d.knobWeight !== undefined) knobWeightEl.value = d.knobWeight;
+
           if (d.lastClay) setClayById(d.lastClay);
         } catch (e) { /* no settings yet */ }
       }
 
       // -------- init --------
       load();
-      unitBtns.forEach(b => {
+      unitBtns.forEach(function (b) {
         const active = b.dataset.unit === lengthUnit;
         b.classList.toggle('active', active);
         b.setAttribute('aria-checked', active ? 'true' : 'false');
       });
-      unitEchoes.forEach(el => { el.textContent = lengthUnit; });
-      // Re-sync slider fill + value after load (values may have changed)
+      unitEchoes.forEach(function (el) { el.textContent = lengthUnit; });
       throwWasteValueEl.textContent = throwWasteEl.value + '%';
       trimWasteValueEl.textContent = trimWasteEl.value + '%';
       updateSliderFill(throwWasteEl);
       updateSliderFill(trimWasteEl);
-      syncHandleUI();
+      updateFormUI();
       if (includeHandleEl.checked && !handleWeightEl.value) {
         applyHandleStyle(handleStyleEl.value);
       }
@@ -1052,7 +1425,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       flex-shrink: 0;
     }
 
-    /* checkbox styling */
+    /* checkbox */
     .checkbox-wrap {
       align-items: center;
       padding-right: 1.25rem;
@@ -1104,7 +1477,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       color: var(--color-cream);
     }
 
-    /* --- Select field --- */
+    /* select */
     .select-field {
       flex: 1;
       padding: 1.1rem 1.5rem 1.1rem 0;
@@ -1133,7 +1506,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       font-family: 'Jost', sans-serif;
     }
 
-    /* --- Clay combobox --- */
+    /* clay combobox */
     .input-wrap.combobox { position: relative; }
     .combobox-input { cursor: text; padding-right: 1.75rem; }
 
@@ -1229,7 +1602,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       color: var(--color-muted);
     }
 
-    /* --- Clay warning banner --- */
+    /* clay warning */
     .clay-warning {
       display: flex;
       align-items: flex-start;
@@ -1255,7 +1628,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       flex-shrink: 0;
     }
 
-    /* --- Result card --- */
+    /* result */
     .result {
       background: linear-gradient(160deg, #120c08 0%, #1f150e 100%);
       border: 1px solid var(--color-border);
@@ -1338,7 +1711,7 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       line-height: 1.4;
     }
 
-    /* --- Notes --- */
+    /* notes */
     .notes { border-top: 1px solid var(--color-border); padding-top: 2rem; }
 
     .notes h3 {
