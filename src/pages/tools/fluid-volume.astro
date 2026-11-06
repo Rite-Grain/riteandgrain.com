@@ -214,25 +214,29 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       // -------- utilities --------
       function parseNum(s) {
         if (s === null || s === undefined) return null;
-        s = String(s).trim();
+        s = String(s).trim()
+          .replace(/\s*(?:""|''|["'″′]|in(?:ches|ch)?|cm|mm|%|°)\s*$/i, '')
+          .trim();
         if (!s) return null;
         // Mixed fraction, e.g. "1 1/2" → 1.5
-        const mixed = s.match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        const mixed = s.match(/^([+-]?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
         if (mixed) {
           const w = parseFloat(mixed[1]);
           const num = parseFloat(mixed[2]);
           const den = parseFloat(mixed[3]);
           if (den === 0 || isNaN(w) || isNaN(num) || isNaN(den)) return null;
-          return w + num / den;
+          const sign = w < 0 || mixed[1].indexOf('-') === 0 ? -1 : 1;
+          return w + sign * (num / den);
         }
         // Simple fraction, e.g. "1/8" → 0.125
-        const frac = s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        const frac = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
         if (frac) {
           const num = parseFloat(frac[1]);
           const den = parseFloat(frac[2]);
           if (den === 0 || isNaN(num) || isNaN(den)) return null;
           return num / den;
         }
+        if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)) return null;
         const n = parseFloat(s);
         return isNaN(n) ? null : n;
       }
@@ -436,6 +440,18 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         return Math.PI * h / 3 * (R*R + R*r + r*r);
       }
 
+      // Computes interior mouth and floor radii for a frustum of exterior height `extH`,
+      // interpolating the exterior radius at z = baseT and converting perpendicular wall
+      // caliper thickness `wall` into horizontal radial span `wall * sqrt(1 + slope^2)`.
+      function interiorRadiiAtHeight(extH, mouthR, baseR, wall, baseT) {
+        const slope = (mouthR - baseR) / extH;
+        const wRadial = wall * Math.sqrt(1 + slope * slope);
+        const intMouthR = mouthR - wRadial;
+        const outerAtFloor = baseR + slope * baseT;
+        const intFloorR = outerAtFloor - wRadial;
+        return { intMouthR: intMouthR, intFloorR: intFloorR };
+      }
+
       function calcTargetCapacity() {
         const capValue = parseNum(capEl.value);
         const capUnit = capUnitEl.value;
@@ -454,16 +470,36 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         const s = clay.shrinkage / 100;
         const capIn3 = capacityToIn3(capValue, capUnit);
 
-        const intMouthR = (mouthD - 2 * wall) / 2;
-        const intBaseR  = (baseD  - 2 * wall) / 2;
-        if (intMouthR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
-
-        const ringSum = intMouthR * intMouthR + intMouthR * intBaseR + intBaseR * intBaseR;
-        const intHeight = 3 * capIn3 / (Math.PI * ringSum);
-        const extHeight = intHeight + baseT;
-
         const mouthR = mouthD / 2;
         const baseR  = baseD  / 2;
+        const seedMouthR = mouthR - wall;
+        const seedBaseR  = baseR  - wall;
+        if (seedMouthR <= 0 || seedBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
+
+        const seedRingSum = seedMouthR * seedMouthR + seedMouthR * seedBaseR + seedBaseR * seedBaseR;
+        let intHeight = 3 * capIn3 / (Math.PI * seedRingSum);
+
+        for (let iter = 0; iter < 25; iter++) {
+          const extH = intHeight + baseT;
+          const radii = interiorRadiiAtHeight(extH, mouthR, baseR, wall, baseT);
+          if (radii.intMouthR <= 0 || radii.intFloorR <= 0) {
+            return { error: 'Walls leave no interior — check dimensions.' };
+          }
+          const ringSum = radii.intMouthR * radii.intMouthR + radii.intMouthR * radii.intFloorR + radii.intFloorR * radii.intFloorR;
+          const nextIntH = 3 * capIn3 / (Math.PI * ringSum);
+          if (Math.abs(nextIntH - intHeight) < 1e-12) {
+            intHeight = nextIntH;
+            break;
+          }
+          intHeight = nextIntH;
+        }
+
+        const extHeight = intHeight + baseT;
+        const finalRadii = interiorRadiiAtHeight(extHeight, mouthR, baseR, wall, baseT);
+        if (finalRadii.intMouthR <= 0 || finalRadii.intFloorR <= 0) {
+          return { error: 'Walls leave no interior — check dimensions.' };
+        }
+
         const extVol = frustumVolume(extHeight, mouthR, baseR);
         const clayVolFinal = extVol - capIn3;
 
@@ -506,12 +542,15 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
 
         const s = clay.shrinkage / 100;
 
-        const intMouthR = (mouthD - 2 * wall) / 2;
-        const intBaseR  = (baseD  - 2 * wall) / 2;
-        if (intMouthR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
-
         const intHeight = height - baseT;
         if (intHeight <= 0) return { error: 'Base thickness meets or exceeds height.' };
+
+        const mouthR = mouthD / 2;
+        const baseR  = baseD  / 2;
+        const radii = interiorRadiiAtHeight(height, mouthR, baseR, wall, baseT);
+        const intMouthR = radii.intMouthR;
+        const intBaseR  = radii.intFloorR;
+        if (intMouthR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
 
         const volThrown = frustumVolume(intHeight, intMouthR, intBaseR);
         const factor = 1 - s;

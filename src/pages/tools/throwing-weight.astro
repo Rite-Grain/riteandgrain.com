@@ -390,25 +390,29 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
       // -------- utilities --------
       function parseNum(s) {
         if (s === null || s === undefined) return null;
-        s = String(s).trim();
+        s = String(s).trim()
+          .replace(/\s*(?:""|''|["'″′]|in(?:ches|ch)?|cm|mm|%|°)\s*$/i, '')
+          .trim();
         if (!s) return null;
         // Mixed fraction, e.g. "1 1/2" → 1.5
-        const mixed = s.match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        const mixed = s.match(/^([+-]?\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
         if (mixed) {
           const w = parseFloat(mixed[1]);
           const num = parseFloat(mixed[2]);
           const den = parseFloat(mixed[3]);
           if (den === 0 || isNaN(w) || isNaN(num) || isNaN(den)) return null;
-          return w + num / den;
+          const sign = w < 0 || mixed[1].indexOf('-') === 0 ? -1 : 1;
+          return w + sign * (num / den);
         }
         // Simple fraction, e.g. "1/8" → 0.125
-        const frac = s.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
+        const frac = s.match(/^([+-]?\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/);
         if (frac) {
           const num = parseFloat(frac[1]);
           const den = parseFloat(frac[2]);
           if (den === 0 || isNaN(num) || isNaN(den)) return null;
           return num / den;
         }
+        if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s)) return null;
         const n = parseFloat(s);
         return isNaN(n) ? null : n;
       }
@@ -613,14 +617,18 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         if (!clay) return { error: 'Choose a clay body above.' };
         if (height <= 0 || topD <= 0 || baseD <= 0 || wall <= 0 || baseT <= 0) return { error: 'All values must be positive.' };
 
-        const intTopR = (topD - 2 * wall) / 2;
-        const intBaseR = (baseD - 2 * wall) / 2;
-        if (intTopR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
         const intHeight = height - baseT;
         if (intHeight <= 0) return { error: 'Base thickness meets or exceeds height.' };
 
         const topR = topD / 2;
         const baseR = baseD / 2;
+        const slope = (topR - baseR) / height;
+        const wRadial = wall * Math.sqrt(1 + slope * slope);
+        const intTopR = topR - wRadial;
+        const outerAtFloor = baseR + slope * baseT;
+        const intBaseR = outerAtFloor - wRadial;
+        if (intTopR <= 0 || intBaseR <= 0) return { error: 'Walls leave no interior — check dimensions.' };
+
         const extVol = frustumVolume(height, topR, baseR);
         const intVol = frustumVolume(intHeight, intTopR, intBaseR);
         const clayVolFinalIn3 = extVol - intVol;
@@ -716,14 +724,20 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         const mouthR   = mouthD / 2;
         const chamberR = chamberD / 2;
         const footR    = footD / 2;
-        const intMouthR   = mouthR - wall;
-        const intChamberR = chamberR - wall;
-        const intFootR    = footR - wall;
-        if (intMouthR <= 0 || intChamberR <= 0 || intFootR <= 0) {
+        const upperH   = height - chamberH;
+
+        const lowerSlope  = (chamberR - footR) / chamberH;
+        const upperSlope  = (mouthR - chamberR) / upperH;
+        const wRadialLower = wall * Math.sqrt(1 + lowerSlope * lowerSlope);
+        const wRadialUpper = wall * Math.sqrt(1 + upperSlope * upperSlope);
+
+        const intMouthR        = mouthR   - wRadialUpper;
+        const intChamberRUpper = chamberR - wRadialUpper;
+        const intChamberRLower = chamberR - wRadialLower;
+        const intFootR         = footR    - wRadialLower;
+        if (intMouthR <= 0 || intChamberRUpper <= 0 || intChamberRLower <= 0 || intFootR <= 0) {
           return { error: 'Walls leave no interior — check dimensions.' };
         }
-
-        const upperH = height - chamberH;
 
         // Exterior
         const extVolLower = frustumVolume(chamberH, chamberR, footR);
@@ -733,12 +747,12 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         // Interior: starts at z=baseT; interpolate outer radius there
         const startFrac = baseT / chamberH;
         const outerAtStart = footR + (chamberR - footR) * startFrac;
-        const intLowerBotR = outerAtStart - wall;
+        const intLowerBotR = outerAtStart - wRadialLower;
         if (intLowerBotR <= 0) return { error: 'Walls leave no interior at the foot — check dimensions.' };
         const intLowerH = chamberH - baseT;
 
-        const intVolLower = frustumVolume(intLowerH, intChamberR, intLowerBotR);
-        const intVolUpper = frustumVolume(upperH, intChamberR, intMouthR);
+        const intVolLower = frustumVolume(intLowerH, intChamberRLower, intLowerBotR);
+        const intVolUpper = frustumVolume(upperH, intChamberRUpper, intMouthR);
         const intVolTotal = intVolLower + intVolUpper;
 
         const clayVolFinalIn3 = extVolTotal - intVolTotal;
@@ -793,8 +807,9 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
           handleStyle = handleStyleEl.value;
         }
 
-        // Lid — disc model
-        let lidBodyG = 0, knobG = 0, lidD = null, lidT = null;
+        // Lid — disc model (with throw & trim waste allowances and thrown dimensions)
+        let lidPieceG = 0, lidBodyG = 0, knobG = 0, lidD = null, lidT = null;
+        let thrownLidD = null, thrownLidT = null;
         if (includeLidEl.checked && FORM_CONFIG[r.form].allowLid) {
           lidD = toInches(parseNum(lidDEl.value));
           lidT = toInches(parseNum(lidThickEl.value));
@@ -802,7 +817,11 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
             const lidFinalIn3 = Math.PI * (lidD / 2) * (lidD / 2) * lidT;
             const tf = r.throwFactor;
             const lidWetIn3 = lidFinalIn3 * tf * tf * tf;
-            lidBodyG = lidWetIn3 * CM3_PER_IN3 * CLAY_DENSITY_G_CM3;
+            lidPieceG = lidWetIn3 * CM3_PER_IN3 * CLAY_DENSITY_G_CM3;
+            const lidAfterThrowG = lidPieceG * (1 + throwPct / 100);
+            lidBodyG = lidAfterThrowG * (1 + trimPct / 100);
+            thrownLidD = lidD * tf;
+            thrownLidT = lidT * tf;
           }
           const k = parseNum(knobWeightEl.value);
           knobG = (k !== null && k > 0) ? k : 0;
@@ -821,11 +840,14 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
         r.bodyWeightG = bodyWeightG;
         r.handleWeightG = handleWeightG;
         r.handleStyle = handleStyle;
+        r.lidPieceG = lidPieceG;
         r.lidBodyG = lidBodyG;
         r.knobG = knobG;
         r.lidTotalG = lidTotalG;
         r.lidD = lidD;
         r.lidT = lidT;
+        r.thrownLidD = thrownLidD;
+        r.thrownLidT = thrownLidT;
         r.totalWeightG = totalWeightG;
         r.totalVolCm3 = totalVolCm3;
         r.totalVolIn3 = totalVolIn3;
@@ -891,8 +913,8 @@ import { clayBodies, cones, defaultCone } from '../../data/clay';
 
         const lidParts = [];
         if (r.lidBodyG > 0) {
-          lidParts.push('<dt>Lid body</dt><dd>' + fmt(r.lidBodyG, 0) + ' g · ' +
-            lenStr(r.lidD) + ' ⌀ × ' + lenStr(r.lidT) + ' thick</dd>');
+          lidParts.push('<dt>Lid (throw to)</dt><dd>' + fmt(r.lidBodyG, 0) + ' g · ' +
+            lenStr(r.thrownLidD) + ' ⌀ × ' + lenStr(r.thrownLidT) + ' thick</dd>');
         }
         if (r.knobG > 0) {
           lidParts.push('<dt>Knob</dt><dd>' + fmt(r.knobG, 0) + ' g</dd>');

@@ -21,3 +21,6 @@ pnpm-debug.log*
 
 # Astro
 .astro/
+
+# Windows NTFS Zone.Identifier streams
+*:Zone.Identifier
